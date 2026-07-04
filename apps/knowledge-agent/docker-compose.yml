@@ -1,0 +1,40 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: knowledge-agent-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    volumes:
+      - knowledge_agent_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    image: knowledge-agent-api:${API_IMAGE_TAG}
+    container_name: knowledge-agent-api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+    ports:
+      - "${API_HOST_PORT}:8000"
+    volumes:
+      - ./storage/uploads:/app/storage/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python -c \"from app.core.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine); print('tables created')\" &&
+      python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  knowledge_agent_pgdata:

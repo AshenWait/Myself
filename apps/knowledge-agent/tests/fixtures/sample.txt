@@ -1,0 +1,4 @@
+Knowledge Agent txt test document.
+
+This file is used to verify plain text upload and parsing.
+It should be parsed as one page.

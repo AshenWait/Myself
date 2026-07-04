@@ -1,56 +1,46 @@
-# Personal Portfolio
+# AshenWait Monorepo
 
-AshenWait 的个人作品集网站，展示简历、项目和后续实验区。当前首个项目是 [Knowledge Agent](https://github.com/AshenWait/knowledge-agent)。
+这个仓库把个人作品集和 Knowledge Agent 复刻版放在一起，保持一个总项目、两个清晰应用。
 
-## Tech Stack
+## Apps
 
-- Vite
-- React
-- TypeScript
-- React Router
-- Lucide React
-- Oxlint
+- `apps/portfolio`: 个人作品集网站，展示简历、项目和实验区。
+- `apps/knowledge-agent`: 企业知识库 RAG + Agent 项目复刻版。
 
-## Development
+## Common Commands
+
+作品集：
 
 ```powershell
+cd apps/portfolio
 npm install
 npm run dev
-```
-
-## Checks
-
-```powershell
 npm run lint
 npm run build
 ```
 
-## Content
+Knowledge Agent 前端：
 
-- Resume content: `src/content/resume.ts`
-- Project content: `src/content/projects.ts`
-- Resume image: `public/resume/resume.png`
-
-Replace `public/resume/resume.png` with the real resume image while keeping the same file name.
-
-## Deploy To ECS
-
-The GitHub Actions workflow builds the static site and syncs `dist/` to `/var/www/personal-portfolio` on the ECS server.
-
-Required GitHub repository secrets:
-
-- `ALIYUN_HOST`: ECS public IP or domain
-- `ALIYUN_USER`: SSH user, for example `root` or a deploy user
-- `ALIYUN_SSH_KEY`: private SSH key with server access
-- `ALIYUN_PORT`: SSH port, usually `22`
-
-On the server, install Nginx and enable the config in `deploy/nginx/personal-portfolio.conf`. The site can first be served by public IP over HTTP, then moved to domain + HTTPS later.
-
-```bash
-sudo mkdir -p /var/www/personal-portfolio
-sudo chown -R "$USER":"$USER" /var/www/personal-portfolio
-sudo cp deploy/nginx/personal-portfolio.conf /etc/nginx/sites-available/personal-portfolio
-sudo ln -s /etc/nginx/sites-available/personal-portfolio /etc/nginx/sites-enabled/personal-portfolio
-sudo nginx -t
-sudo systemctl reload nginx
+```powershell
+cd apps/knowledge-agent/frontend
+npm install
+npm run dev
+npm run lint
+npm run build
 ```
+
+Knowledge Agent 后端：
+
+```powershell
+cd apps/knowledge-agent
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+## Notes
+
+- `apps/knowledge-agent/.env.example` 是环境变量模板，真实 `.env` 不提交。
+- 上传文件只保留 `storage/uploads/.gitkeep`，运行时上传内容不进仓库。
+- 作品集部署 workflow 只构建 `apps/portfolio` 并同步到阿里云 ECS 的 `/var/www/personal-portfolio`。

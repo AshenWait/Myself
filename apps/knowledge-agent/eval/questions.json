@@ -1,0 +1,272 @@
+[
+  {
+    "id": "q001",
+    "question": "sample.txt 是用来验证什么的？",
+    "expected_answer": "sample.txt 用来验证纯文本文件上传和解析。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "This file is used to verify plain text upload and parsing.",
+    "tags": ["txt", "upload", "parsing"]
+  },
+  {
+    "id": "q002",
+    "question": "txt 测试文档应该被解析成几页？",
+    "expected_answer": "txt 测试文档应该被解析成一页。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "It should be parsed as one page.",
+    "tags": ["txt", "page_count"]
+  },
+  {
+    "id": "q003",
+    "question": "sample.txt 的文档标题是什么？",
+    "expected_answer": "标题是 Knowledge Agent txt test document.",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "Knowledge Agent txt test document.",
+    "tags": ["txt", "metadata"]
+  },
+  {
+    "id": "q004",
+    "question": "哪个测试文件用于验证 plain text upload？",
+    "expected_answer": "tests/fixtures/sample.txt 用于验证 plain text upload。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "This file is used to verify plain text upload and parsing.",
+    "tags": ["txt", "upload"]
+  },
+  {
+    "id": "q005",
+    "question": "plain text 测试文件验证上传之外还验证什么？",
+    "expected_answer": "还验证 parsing，也就是文本解析。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "plain text upload and parsing.",
+    "tags": ["txt", "parsing"]
+  },
+  {
+    "id": "q006",
+    "question": "sample.md 是用来验证什么的？",
+    "expected_answer": "sample.md 用来验证 markdown 上传和解析。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "This markdown file is used to verify markdown upload and parsing.",
+    "tags": ["markdown", "upload", "parsing"]
+  },
+  {
+    "id": "q007",
+    "question": "Markdown 文件会被当成什么来解析？",
+    "expected_answer": "Markdown 文件会被当成文本解析。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "Markdown files are parsed as text.",
+    "tags": ["markdown", "parsing"]
+  },
+  {
+    "id": "q008",
+    "question": "Markdown 文件应该保存成几条文档记录？",
+    "expected_answer": "Markdown 文件应该保存成一条 document record。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "They should be saved as one document record.",
+    "tags": ["markdown", "document"]
+  },
+  {
+    "id": "q009",
+    "question": "Markdown 测试文档的预期页数是多少？",
+    "expected_answer": "预期 page count 是 1。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "The expected page count is 1.",
+    "tags": ["markdown", "page_count"]
+  },
+  {
+    "id": "q010",
+    "question": "sample.md 的标题是什么？",
+    "expected_answer": "标题是 Knowledge Agent Markdown Test。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "# Knowledge Agent Markdown Test",
+    "tags": ["markdown", "metadata"]
+  },
+  {
+    "id": "q011",
+    "question": "Markdown 测试文档 Notes 部分说明了哪三点？",
+    "expected_answer": "说明了 Markdown 文件会按文本解析、应该保存成一条文档记录、预期页数是 1。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "Markdown files are parsed as text.",
+    "tags": ["markdown", "notes"]
+  },
+  {
+    "id": "q012",
+    "question": "哪个测试文件用于验证 markdown upload？",
+    "expected_answer": "tests/fixtures/sample.md 用于验证 markdown upload。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "This markdown file is used to verify markdown upload and parsing.",
+    "tags": ["markdown", "upload"]
+  },
+  {
+    "id": "q013",
+    "question": "sample.pdf 是用来验证什么的？",
+    "expected_answer": "sample.pdf 用来验证 PDF 文本抽取。",
+    "source_file": "tests/fixtures/sample.pdf",
+    "source_page": 1,
+    "source_quote": "This file is used to verify PDF text extraction.",
+    "tags": ["pdf", "text_extraction"]
+  },
+  {
+    "id": "q014",
+    "question": "PDF 测试文档的标题是什么？",
+    "expected_answer": "标题是 Knowledge Agent PDF test document.",
+    "source_file": "tests/fixtures/sample.pdf",
+    "source_page": 1,
+    "source_quote": "Knowledge Agent PDF test document.",
+    "tags": ["pdf", "metadata"]
+  },
+  {
+    "id": "q015",
+    "question": "哪个测试文件用于验证 PDF text extraction？",
+    "expected_answer": "tests/fixtures/sample.pdf 用于验证 PDF text extraction。",
+    "source_file": "tests/fixtures/sample.pdf",
+    "source_page": 1,
+    "source_quote": "This file is used to verify PDF text extraction.",
+    "tags": ["pdf", "text_extraction"]
+  },
+  {
+    "id": "q016",
+    "question": "PDF 测试文档验证的是上传还是文本抽取？",
+    "expected_answer": "它验证的是 PDF text extraction，也就是 PDF 文本抽取。",
+    "source_file": "tests/fixtures/sample.pdf",
+    "source_page": 1,
+    "source_quote": "This file is used to verify PDF text extraction.",
+    "tags": ["pdf", "text_extraction"]
+  },
+  {
+    "id": "q017",
+    "question": "txt 和 markdown 测试文档的预期页数有什么共同点？",
+    "expected_answer": "它们都应该被解析成 1 页。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "It should be parsed as one page.",
+    "tags": ["comparison", "page_count"]
+  },
+  {
+    "id": "q018",
+    "question": "txt 文件和 markdown 文件都验证了哪类能力？",
+    "expected_answer": "它们都验证了上传和解析能力。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "upload and parsing.",
+    "tags": ["comparison", "upload", "parsing"]
+  },
+  {
+    "id": "q019",
+    "question": "哪个测试文档明确说文件会被 parsed as text？",
+    "expected_answer": "sample.md 明确说 Markdown files are parsed as text.",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "Markdown files are parsed as text.",
+    "tags": ["markdown", "parsing"]
+  },
+  {
+    "id": "q020",
+    "question": "哪个测试文档明确说 should be parsed as one page？",
+    "expected_answer": "sample.txt 明确说 It should be parsed as one page.",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "It should be parsed as one page.",
+    "tags": ["txt", "page_count"]
+  },
+  {
+    "id": "q021",
+    "question": "哪个测试文档明确说 expected page count is 1？",
+    "expected_answer": "sample.md 明确说 The expected page count is 1.",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "The expected page count is 1.",
+    "tags": ["markdown", "page_count"]
+  },
+  {
+    "id": "q022",
+    "question": "Knowledge Agent 的 markdown 测试文件是否应该保存为多个 document record？",
+    "expected_answer": "不应该，它应该保存为一个 document record。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "They should be saved as one document record.",
+    "tags": ["markdown", "document"]
+  },
+  {
+    "id": "q023",
+    "question": "sample.txt 是否用于验证 PDF 文本抽取？",
+    "expected_answer": "不是，sample.txt 用于验证 plain text upload and parsing。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "This file is used to verify plain text upload and parsing.",
+    "tags": ["txt", "negative"]
+  },
+  {
+    "id": "q024",
+    "question": "sample.md 是否用于验证 PDF text extraction？",
+    "expected_answer": "不是，sample.md 用于验证 markdown upload and parsing。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "This markdown file is used to verify markdown upload and parsing.",
+    "tags": ["markdown", "negative"]
+  },
+  {
+    "id": "q025",
+    "question": "sample.pdf 是否用于验证 markdown upload？",
+    "expected_answer": "不是，sample.pdf 用于验证 PDF text extraction。",
+    "source_file": "tests/fixtures/sample.pdf",
+    "source_page": 1,
+    "source_quote": "This file is used to verify PDF text extraction.",
+    "tags": ["pdf", "negative"]
+  },
+  {
+    "id": "q026",
+    "question": "三个测试文档分别覆盖哪三种文件类型？",
+    "expected_answer": "分别覆盖 txt、markdown 和 PDF。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "Knowledge Agent txt test document.",
+    "tags": ["comparison", "file_type"]
+  },
+  {
+    "id": "q027",
+    "question": "哪一个测试文件的内容包含 Notes 小节？",
+    "expected_answer": "sample.md 包含 Notes 小节。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "## Notes",
+    "tags": ["markdown", "structure"]
+  },
+  {
+    "id": "q028",
+    "question": "PDF 测试文件中的核心验证动作是什么？",
+    "expected_answer": "核心验证动作是 PDF text extraction。",
+    "source_file": "tests/fixtures/sample.pdf",
+    "source_page": 1,
+    "source_quote": "verify PDF text extraction.",
+    "tags": ["pdf", "text_extraction"]
+  },
+  {
+    "id": "q029",
+    "question": "txt 测试文件中的核心验证动作是什么？",
+    "expected_answer": "核心验证动作是 plain text upload and parsing。",
+    "source_file": "tests/fixtures/sample.txt",
+    "source_page": 1,
+    "source_quote": "verify plain text upload and parsing.",
+    "tags": ["txt", "upload", "parsing"]
+  },
+  {
+    "id": "q030",
+    "question": "markdown 测试文件中的核心验证动作是什么？",
+    "expected_answer": "核心验证动作是 markdown upload and parsing。",
+    "source_file": "tests/fixtures/sample.md",
+    "source_page": 1,
+    "source_quote": "verify markdown upload and parsing.",
+    "tags": ["markdown", "upload", "parsing"]
+  }
+]

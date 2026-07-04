@@ -3,14 +3,26 @@ logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies and build output
+node_modules/
+dist/
+dist-ssr/
 *.local
+
+# Python runtime
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment and uploaded runtime data
+.env
+storage/uploads/*
+!storage/uploads/.gitkeep
+apps/**/storage/uploads/*
+!apps/**/storage/uploads/.gitkeep
 
 # Editor directories and files
 .vscode/*

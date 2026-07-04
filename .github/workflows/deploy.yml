@@ -19,14 +19,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: apps/portfolio/package-lock.json
 
       - name: Install dependencies
+        working-directory: apps/portfolio
         run: npm ci
 
       - name: Lint
+        working-directory: apps/portfolio
         run: npm run lint
 
       - name: Build
+        working-directory: apps/portfolio
         run: npm run build
 
       - name: Install rsync
@@ -42,7 +46,7 @@ jobs:
       - name: Deploy static files
         run: |
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.ALIYUN_PORT }}" \
-            dist/ "${{ secrets.ALIYUN_USER }}@${{ secrets.ALIYUN_HOST }}:/var/www/personal-portfolio/"
+            apps/portfolio/dist/ "${{ secrets.ALIYUN_USER }}@${{ secrets.ALIYUN_HOST }}:/var/www/personal-portfolio/"
 
       - name: Reload Nginx
         run: |
