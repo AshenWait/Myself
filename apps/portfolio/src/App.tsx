@@ -20,8 +20,11 @@ const navItems = [
   { label: '概览', href: '/', icon: Home },
   { label: '简历', href: '/#resume', icon: FileText },
   { label: '项目', href: '/#projects', icon: Blocks },
+  { label: 'Agent', href: '/knowledge-agent', icon: Blocks },
   { label: 'Lab', href: '/lab', icon: FlaskConical },
 ]
+
+const KNOWLEDGE_AGENT_URL = import.meta.env.VITE_KNOWLEDGE_AGENT_URL || 'http://127.0.0.1:5174/'
 
 function ScrollToHash() {
   const location = useLocation()
@@ -111,6 +114,7 @@ function AppShell() {
       <main className="page">
         <Routes>
           <Route element={<HomePage />} path="/" />
+          <Route element={<KnowledgeAgentPage />} path="/knowledge-agent/*" />
           <Route element={<ProjectPage />} path="/projects/:slug" />
           <Route element={<LabPage />} path="/lab/*" />
           <Route element={<NotFoundPage />} path="*" />
@@ -271,6 +275,12 @@ function HomePage() {
               </div>
 
               <div className="project-actions">
+                {project.appPath && (
+                  <Link to={project.appPath}>
+                    打开工作台
+                    <ArrowUpRight size={16} />
+                  </Link>
+                )}
                 <Link to={`/projects/${project.slug}`}>
                   项目详情
                   <ArrowUpRight size={16} />
@@ -342,11 +352,47 @@ function ProjectPage() {
               <span key={item}>{item}</span>
             ))}
           </div>
+          {project.appPath && (
+            <Link className="primary-action repo-action" to={project.appPath}>
+              打开工作台
+              <ArrowUpRight size={17} />
+            </Link>
+          )}
           <a className="primary-action repo-action" href={project.repoUrl} target="_blank" rel="noreferrer">
             打开 GitHub
             <GitBranch size={17} />
           </a>
         </article>
+      </div>
+    </section>
+  )
+}
+
+function KnowledgeAgentPage() {
+  return (
+    <section className="agent-page">
+      <div className="agent-topbar">
+        <div>
+          <p className="eyebrow">Knowledge Agent</p>
+          <h1>知识库问答工作台</h1>
+        </div>
+        <div className="agent-actions">
+          <Link className="secondary-action" to="/projects/knowledge-agent">
+            项目详情
+          </Link>
+          <a className="primary-action" href={KNOWLEDGE_AGENT_URL} target="_blank" rel="noreferrer">
+            新窗口打开
+            <ArrowUpRight size={17} />
+          </a>
+        </div>
+      </div>
+
+      <div className="agent-frame-wrap">
+        <iframe
+          className="agent-frame"
+          src={KNOWLEDGE_AGENT_URL}
+          title="Knowledge Agent workspace"
+        />
       </div>
     </section>
   )

@@ -8,6 +8,7 @@ export type Project = {
   name: string
   tagline: string
   repoUrl: string
+  appPath?: string
   status: string
   period: string
   summary: string
@@ -22,6 +23,7 @@ export const projects: Project[] = [
     name: 'Knowledge Agent',
     tagline: '企业知识库 RAG + Agent 项目',
     repoUrl: 'https://github.com/AshenWait/knowledge-agent',
+    appPath: '/knowledge-agent',
     status: '持续迭代',
     period: '2026',
     summary:
