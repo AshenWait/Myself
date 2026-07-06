@@ -6,7 +6,6 @@ import {
   GitBranch,
   MapPin,
   Menu,
-  Upload,
   UserRound,
   X,
 } from 'lucide-react'
@@ -165,44 +164,44 @@ function HomePage() {
 
   return (
     <>
-      <section className="section" id="resume">
+      <section className="section resume-page" id="resume">
         <div className="section-heading">
           <p className="eyebrow">Resume</p>
           <h2>简历</h2>
         </div>
 
-        <div className="resume-grid">
+        <div className="resume-card">
           <article className="resume-main">
-            <div className="resume-title">
-              <div>
-                <h3>{resume.name}</h3>
-                <p>{resume.role}</p>
+            <div className="resume-copy">
+              <div className="resume-title">
+                <div>
+                  <h3>{resume.name}</h3>
+                  <p>{resume.role}</p>
+                </div>
+                <span className="location">
+                  <MapPin size={16} />
+                  {resume.location}
+                </span>
               </div>
-              <span className="location">
-                <MapPin size={16} />
-                {resume.location}
-              </span>
+
+              <p className="resume-summary">{resume.summary}</p>
+
+              <div className="focus-list" aria-label="Focus areas">
+                {resume.focus.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
+
+              <div className="resume-links">
+                {resume.links.map((link) => (
+                  <a href={link.href} key={link.href} target="_blank" rel="noreferrer">
+                    {link.label}
+                    <ArrowUpRight size={15} />
+                  </a>
+                ))}
+              </div>
             </div>
 
-            <p className="resume-summary">{resume.summary}</p>
-
-            <div className="focus-list" aria-label="Focus areas">
-              {resume.focus.map((item) => (
-                <span key={item}>{item}</span>
-              ))}
-            </div>
-
-            <div className="resume-links">
-              {resume.links.map((link) => (
-                <a href={link.href} key={link.href} target="_blank" rel="noreferrer">
-                  {link.label}
-                  <ArrowUpRight size={15} />
-                </a>
-              ))}
-            </div>
-          </article>
-
-          <aside className="profile-rail">
             <img
               alt=""
               hidden
@@ -218,27 +217,27 @@ function HomePage() {
               onLoad={() => setResumeImageReady(true)}
             />
 
-            <div className="avatar-panel">
-              <div className={`avatar-frame ${visibleAvatarSrc ? 'has-image' : ''}`}>
-                {visibleAvatarSrc ? (
-                  <img alt={`${resume.name} avatar`} src={visibleAvatarSrc} />
-                ) : (
-                  <UserRound size={44} strokeWidth={1.5} />
-                )}
-              </div>
-              <label className="avatar-upload">
-                <Upload size={16} strokeWidth={1.8} />
-                上传头像
-                <input accept="image/*" onChange={handleAvatarUpload} type="file" />
-              </label>
-            </div>
+            <label className={`avatar-frame ${visibleAvatarSrc ? 'has-image' : ''}`}>
+              {visibleAvatarSrc ? (
+                <img alt={`${resume.name} avatar`} src={visibleAvatarSrc} />
+              ) : (
+                <span className="avatar-empty">
+                  <UserRound size={38} strokeWidth={1.5} />
+                  <span className="avatar-upload-copy">
+                    <span className="avatar-plus">+</span>
+                    上传头像
+                  </span>
+                </span>
+              )}
+              <input accept="image/*" onChange={handleAvatarUpload} type="file" />
+            </label>
+          </article>
 
-            {resumeImageReady && (
-              <div className="resume-image-panel">
-                <img alt={`${resume.name} resume`} src="/resume/resume.png" />
-              </div>
-            )}
-          </aside>
+          {resumeImageReady && (
+            <aside className="resume-image-panel">
+              <img alt={`${resume.name} resume`} src="/resume/resume.png" />
+            </aside>
+          )}
         </div>
 
         <div className="resume-details">
@@ -263,9 +262,16 @@ function HomePage() {
             </article>
           ))}
         </div>
+
+        <div className="resume-next">
+          <a className="primary-action" href="#projects">
+            查看项目
+            <ArrowUpRight size={17} />
+          </a>
+        </div>
       </section>
 
-      <section className="section" id="projects">
+      <section className="section projects-page" id="projects">
         <div className="section-heading">
           <p className="eyebrow">Projects</p>
           <h2>项目</h2>
