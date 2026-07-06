@@ -4,7 +4,6 @@ import {
   FileText,
   FlaskConical,
   GitBranch,
-  MapPin,
   Menu,
   UserRound,
   X,
@@ -166,7 +165,6 @@ function HomePage() {
     <>
       <section className="section resume-page" id="resume">
         <div className="section-heading">
-          <p className="eyebrow">Resume</p>
           <h2>简历</h2>
         </div>
 
@@ -193,10 +191,6 @@ function HomePage() {
                   <h3>{resume.name}</h3>
                   <p>{resume.role}</p>
                 </div>
-                <span className="location">
-                  <MapPin size={16} />
-                  {resume.location}
-                </span>
               </div>
 
               <p className="resume-summary">{resume.summary}</p>

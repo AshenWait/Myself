@@ -273,14 +273,6 @@
   color: var(--muted);
 }
 
-.location {
-  align-items: center;
-  color: var(--muted);
-  display: inline-flex;
-  gap: 6px;
-  white-space: nowrap;
-}
-
 .resume-summary {
   color: var(--muted);
   margin-top: 22px;
