@@ -29,9 +29,9 @@ npm run build
 
 - Resume content: `src/content/resume.ts`
 - Project content: `src/content/projects.ts`
-- Resume image: `public/resume/resume.png`
+- Optional resume image: `public/resume/resume.png`
 
-Replace `public/resume/resume.png` with the real resume image while keeping the same file name.
+If `public/resume/resume.png` exists and loads successfully, the homepage displays it next to the resume. If it is absent, the image panel is hidden.
 
 ## Deploy To ECS
 

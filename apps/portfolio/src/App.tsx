@@ -4,8 +4,6 @@ import {
   FileText,
   FlaskConical,
   GitBranch,
-  Home,
-  Image,
   MapPin,
   Menu,
   X,
@@ -17,8 +15,7 @@ import { projects } from './content/projects'
 import { resume } from './content/resume'
 
 const navItems = [
-  { label: '概览', href: '/', icon: Home },
-  { label: '简历', href: '/#resume', icon: FileText },
+  { label: '简历', href: '/', icon: FileText },
   { label: '项目', href: '/#projects', icon: Blocks },
   { label: 'Agent', href: '/knowledge-agent', icon: Blocks },
   { label: 'Lab', href: '/lab', icon: FlaskConical },
@@ -125,61 +122,17 @@ function AppShell() {
 }
 
 function HomePage() {
+  const [resumeImageReady, setResumeImageReady] = useState(false)
+
   return (
     <>
-      <section className="hero-section" id="top">
-        <div className="hero-copy">
-          <p className="eyebrow">Personal portfolio</p>
-          <h1>{resume.name}</h1>
-          <p className="hero-role">{resume.role}</p>
-          <p className="hero-summary">{resume.summary}</p>
-
-          <div className="hero-actions">
-            <a className="primary-action" href="#projects">
-              查看项目
-              <ArrowUpRight size={17} />
-            </a>
-            <a className="secondary-action" href="/resume/resume.png" target="_blank" rel="noreferrer">
-              简历图片
-              <Image size={17} />
-            </a>
-          </div>
-        </div>
-
-        <div className="hero-panel" aria-label="Profile snapshot">
-          <div className="signal-row">
-            <span>RAG</span>
-            <span>Agent</span>
-            <span>Trace</span>
-          </div>
-          <div className="terminal-card">
-            <span className="terminal-dot"></span>
-            <span>build: portfolio ready</span>
-          </div>
-          <div className="hero-stats">
-            <div>
-              <strong>01</strong>
-              <span>当前项目</span>
-            </div>
-            <div>
-              <strong>63</strong>
-              <span>项目推进天数</span>
-            </div>
-            <div>
-              <strong>30</strong>
-              <span>RAG 评测题</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="section" id="resume">
         <div className="section-heading">
           <p className="eyebrow">Resume</p>
           <h2>简历</h2>
         </div>
 
-        <div className="resume-grid">
+        <div className={`resume-grid ${resumeImageReady ? '' : 'without-image'}`}>
           <article className="resume-main">
             <div className="resume-title">
               <div>
@@ -210,9 +163,19 @@ function HomePage() {
             </div>
           </article>
 
-          <aside className="resume-image-panel">
-            <img alt="Resume preview" src="/resume/resume.png" />
-          </aside>
+          <img
+            alt=""
+            hidden
+            src="/resume/resume.png"
+            onError={() => setResumeImageReady(false)}
+            onLoad={() => setResumeImageReady(true)}
+          />
+
+          {resumeImageReady && (
+            <aside className="resume-image-panel">
+              <img alt={`${resume.name} resume`} src="/resume/resume.png" />
+            </aside>
+          )}
         </div>
 
         <div className="resume-details">
