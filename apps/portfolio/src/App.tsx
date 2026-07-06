@@ -171,6 +171,21 @@ function HomePage() {
         </div>
 
         <div className="resume-card">
+          <img
+            alt=""
+            hidden
+            src={DEFAULT_AVATAR_SRC}
+            onError={() => setDefaultAvatarReady(false)}
+            onLoad={() => setDefaultAvatarReady(true)}
+          />
+          <img
+            alt=""
+            hidden
+            src="/resume/resume.png"
+            onError={() => setResumeImageReady(false)}
+            onLoad={() => setResumeImageReady(true)}
+          />
+
           <article className="resume-main">
             <div className="resume-copy">
               <div className="resume-title">
@@ -201,21 +216,6 @@ function HomePage() {
                 ))}
               </div>
             </div>
-
-            <img
-              alt=""
-              hidden
-              src={DEFAULT_AVATAR_SRC}
-              onError={() => setDefaultAvatarReady(false)}
-              onLoad={() => setDefaultAvatarReady(true)}
-            />
-            <img
-              alt=""
-              hidden
-              src="/resume/resume.png"
-              onError={() => setResumeImageReady(false)}
-              onLoad={() => setResumeImageReady(true)}
-            />
 
             <label className={`avatar-frame ${visibleAvatarSrc ? 'has-image' : ''}`}>
               {visibleAvatarSrc ? (

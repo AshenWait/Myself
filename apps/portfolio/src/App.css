@@ -246,13 +246,14 @@
 }
 
 .resume-main {
-  align-items: center;
+  align-items: start;
   display: grid;
   gap: 30px;
   grid-template-columns: minmax(0, 1fr) minmax(210px, 260px);
 }
 
 .resume-copy {
+  grid-column: 1;
   min-width: 0;
 }
 
@@ -318,8 +319,10 @@
   color: var(--muted);
   cursor: pointer;
   display: flex;
+  grid-column: 2;
   justify-content: center;
   overflow: hidden;
+  place-self: start end;
   text-align: center;
   width: 100%;
 }
