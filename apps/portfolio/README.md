@@ -29,7 +29,10 @@ npm run build
 
 - Resume content: `src/content/resume.ts`
 - Project content: `src/content/projects.ts`
+- Optional avatar image: `public/avatar/avatar.png`
 - Optional resume image: `public/resume/resume.png`
+
+If `public/avatar/avatar.png` exists and loads successfully, the homepage uses it as the default avatar. The avatar upload button can also preview a local image in the browser.
 
 If `public/resume/resume.png` exists and loads successfully, the homepage displays it next to the resume. If it is absent, the image panel is hidden.
 

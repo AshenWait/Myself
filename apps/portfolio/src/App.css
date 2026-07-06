@@ -218,11 +218,8 @@
   grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.65fr);
 }
 
-.resume-grid.without-image {
-  grid-template-columns: 1fr;
-}
-
 .resume-main,
+.avatar-panel,
 .resume-image-panel,
 .detail-block,
 .project-card,
@@ -233,6 +230,7 @@
 }
 
 .resume-main,
+.avatar-panel,
 .detail-block,
 .project-card,
 .detail-columns article,
@@ -290,6 +288,68 @@
 
 .focus-list span {
   background: var(--soft-mint);
+}
+
+.profile-rail {
+  display: grid;
+  gap: 18px;
+}
+
+.avatar-panel {
+  align-content: center;
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  min-height: 100%;
+}
+
+.avatar-frame {
+  align-items: center;
+  aspect-ratio: 1;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(135deg, var(--ink), var(--accent), var(--mint)) border-box;
+  border: 2px solid transparent;
+  color: var(--muted);
+  display: flex;
+  justify-content: center;
+  max-width: 236px;
+  overflow: hidden;
+  width: min(100%, 236px);
+}
+
+.avatar-frame.has-image {
+  border-color: var(--line-strong);
+}
+
+.avatar-frame img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.avatar-upload {
+  align-items: center;
+  background: var(--accent);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--surface);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 750;
+  gap: 8px;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 14px;
+}
+
+.avatar-upload:hover {
+  box-shadow: 5px 5px 0 var(--ink);
+  transform: translate(-2px, -2px);
+}
+
+.avatar-upload input {
+  display: none;
 }
 
 .resume-image-panel {

@@ -6,9 +6,11 @@ import {
   GitBranch,
   MapPin,
   Menu,
+  Upload,
+  UserRound,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { type ChangeEvent, useEffect, useState } from 'react'
 import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import './App.css'
 import { projects } from './content/projects'
@@ -22,6 +24,8 @@ const navItems = [
 ]
 
 const KNOWLEDGE_AGENT_URL = import.meta.env.VITE_KNOWLEDGE_AGENT_URL || 'http://127.0.0.1:5174/'
+const AVATAR_STORAGE_KEY = 'portfolio-avatar-image'
+const DEFAULT_AVATAR_SRC = '/avatar/avatar.png'
 
 function ScrollToHash() {
   const location = useLocation()
@@ -123,6 +127,41 @@ function AppShell() {
 
 function HomePage() {
   const [resumeImageReady, setResumeImageReady] = useState(false)
+  const [defaultAvatarReady, setDefaultAvatarReady] = useState(false)
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(() => {
+    try {
+      return window.localStorage.getItem(AVATAR_STORAGE_KEY)
+    } catch {
+      return null
+    }
+  })
+
+  const visibleAvatarSrc = avatarSrc || (defaultAvatarReady ? DEFAULT_AVATAR_SRC : null)
+
+  function handleAvatarUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+
+    if (!file || !file.type.startsWith('image/')) {
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        return
+      }
+
+      setAvatarSrc(reader.result)
+
+      try {
+        window.localStorage.setItem(AVATAR_STORAGE_KEY, reader.result)
+      } catch {
+        // The preview still works for this session if browser storage is unavailable.
+      }
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }
 
   return (
     <>
@@ -132,7 +171,7 @@ function HomePage() {
           <h2>简历</h2>
         </div>
 
-        <div className={`resume-grid ${resumeImageReady ? '' : 'without-image'}`}>
+        <div className="resume-grid">
           <article className="resume-main">
             <div className="resume-title">
               <div>
@@ -163,19 +202,43 @@ function HomePage() {
             </div>
           </article>
 
-          <img
-            alt=""
-            hidden
-            src="/resume/resume.png"
-            onError={() => setResumeImageReady(false)}
-            onLoad={() => setResumeImageReady(true)}
-          />
+          <aside className="profile-rail">
+            <img
+              alt=""
+              hidden
+              src={DEFAULT_AVATAR_SRC}
+              onError={() => setDefaultAvatarReady(false)}
+              onLoad={() => setDefaultAvatarReady(true)}
+            />
+            <img
+              alt=""
+              hidden
+              src="/resume/resume.png"
+              onError={() => setResumeImageReady(false)}
+              onLoad={() => setResumeImageReady(true)}
+            />
 
-          {resumeImageReady && (
-            <aside className="resume-image-panel">
-              <img alt={`${resume.name} resume`} src="/resume/resume.png" />
-            </aside>
-          )}
+            <div className="avatar-panel">
+              <div className={`avatar-frame ${visibleAvatarSrc ? 'has-image' : ''}`}>
+                {visibleAvatarSrc ? (
+                  <img alt={`${resume.name} avatar`} src={visibleAvatarSrc} />
+                ) : (
+                  <UserRound size={44} strokeWidth={1.5} />
+                )}
+              </div>
+              <label className="avatar-upload">
+                <Upload size={16} strokeWidth={1.8} />
+                上传头像
+                <input accept="image/*" onChange={handleAvatarUpload} type="file" />
+              </label>
+            </div>
+
+            {resumeImageReady && (
+              <div className="resume-image-panel">
+                <img alt={`${resume.name} resume`} src="/resume/resume.png" />
+              </div>
+            )}
+          </aside>
         </div>
 
         <div className="resume-details">
