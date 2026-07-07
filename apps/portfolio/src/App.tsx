@@ -55,10 +55,10 @@ function AppShell() {
       <aside className={`sidebar ${navOpen ? 'is-open' : ''}`}>
         <div>
           <Link className="brand" to="/">
-            <span className="brand-mark">AW</span>
+            <span className="brand-mark">YP</span>
             <span>
-              <span className="brand-name">AshenWait</span>
-              <span className="brand-role">AI Portfolio</span>
+              <span className="brand-name">{resume.name}</span>
+              <span className="brand-role">AI Resume</span>
             </span>
           </Link>
 
@@ -97,8 +97,8 @@ function AppShell() {
 
       <header className="mobile-header">
         <Link className="brand compact" to="/">
-          <span className="brand-mark">AW</span>
-          <span className="brand-name">AshenWait</span>
+          <span className="brand-mark">YP</span>
+          <span className="brand-name">{resume.name}</span>
         </Link>
         <button
           aria-label={navOpen ? 'Close navigation' : 'Open navigation'}
