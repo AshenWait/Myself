@@ -235,7 +235,6 @@
 
 .project-card-header p,
 .project-summary,
-.lab-strip p,
 .detail-block li,
 .check-list li {
   color: var(--muted);
@@ -321,17 +320,6 @@
 .stack-list.large span {
   font-size: 0.95rem;
   padding: 8px 12px;
-}
-
-.lab-strip {
-  align-items: center;
-  display: flex;
-  gap: 24px;
-  justify-content: space-between;
-}
-
-.lab-strip p {
-  max-width: 650px;
 }
 
 .detail-page {
@@ -431,11 +419,6 @@
 
   .detail-columns {
     grid-template-columns: 1fr;
-  }
-
-  .lab-strip {
-    align-items: start;
-    flex-direction: column;
   }
 
   .agent-topbar {

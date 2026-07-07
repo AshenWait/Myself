@@ -15,7 +15,7 @@ import { resume } from './content/resume'
 
 const navItems = [
   { label: '简历', href: '/', icon: FileText },
-  { label: '项目', href: '/#projects', icon: Blocks },
+  { label: '项目', href: '/projects', icon: Blocks },
   { label: 'Agent', href: '/knowledge-agent', icon: Blocks },
   { label: 'Lab', href: '/lab', icon: FlaskConical },
 ]
@@ -111,6 +111,7 @@ function AppShell() {
         <Routes>
           <Route element={<HomePage />} path="/" />
           <Route element={<KnowledgeAgentPage />} path="/knowledge-agent/*" />
+          <Route element={<ProjectsPage />} path="/projects" />
           <Route element={<ProjectPage />} path="/projects/:slug" />
           <Route element={<LabPage />} path="/lab/*" />
           <Route element={<NotFoundPage />} path="*" />
@@ -129,81 +130,73 @@ function HomePage() {
         </figure>
 
         <div className="resume-next">
-          <a className="primary-action" href="#projects">
+          <Link className="primary-action" to="/projects">
             查看项目
             <ArrowUpRight size={17} />
-          </a>
+          </Link>
         </div>
-      </section>
-
-      <section className="section projects-page" id="projects">
-        <div className="section-heading">
-          <p className="eyebrow">Projects</p>
-          <h2>项目</h2>
-        </div>
-
-        <div className="project-list">
-          {projects.map((project) => (
-            <article className="project-card" key={project.slug}>
-              <div className="project-card-header">
-                <div>
-                  <span className="project-status">{project.status}</span>
-                  <h3>{project.name}</h3>
-                  <p>{project.tagline}</p>
-                </div>
-                <span className="project-year">{project.period}</span>
-              </div>
-
-              <p className="project-summary">{project.summary}</p>
-
-              <div className="metric-grid">
-                {project.metrics.map((metric) => (
-                  <div key={metric.label}>
-                    <strong>{metric.value}</strong>
-                    <span>{metric.label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="stack-list">
-                {project.stack.map((item) => (
-                  <span key={item}>{item}</span>
-                ))}
-              </div>
-
-              <div className="project-actions">
-                {project.appPath && (
-                  <Link to={project.appPath}>
-                    打开工作台
-                    <ArrowUpRight size={16} />
-                  </Link>
-                )}
-                <Link to={`/projects/${project.slug}`}>
-                  项目详情
-                  <ArrowUpRight size={16} />
-                </Link>
-                <a href={project.repoUrl} target="_blank" rel="noreferrer">
-                  GitHub
-                  <GitBranch size={16} />
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="section lab-strip" id="lab">
-        <div>
-          <p className="eyebrow">Lab</p>
-          <h2>网页小游戏与实验区</h2>
-          <p>这里预留给后续小游戏、交互 Demo 和小工具。当前先保持入口，避免提前引入复杂逻辑。</p>
-        </div>
-        <Link className="primary-action" to="/lab">
-          进入 Lab
-          <ArrowUpRight size={17} />
-        </Link>
       </section>
     </>
+  )
+}
+
+function ProjectsPage() {
+  return (
+    <section className="section projects-page" id="projects">
+      <div className="section-heading">
+        <p className="eyebrow">Projects</p>
+        <h2>项目</h2>
+      </div>
+
+      <div className="project-list">
+        {projects.map((project) => (
+          <article className="project-card" key={project.slug}>
+            <div className="project-card-header">
+              <div>
+                <span className="project-status">{project.status}</span>
+                <h3>{project.name}</h3>
+                <p>{project.tagline}</p>
+              </div>
+              <span className="project-year">{project.period}</span>
+            </div>
+
+            <p className="project-summary">{project.summary}</p>
+
+            <div className="metric-grid">
+              {project.metrics.map((metric) => (
+                <div key={metric.label}>
+                  <strong>{metric.value}</strong>
+                  <span>{metric.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="stack-list">
+              {project.stack.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
+
+            <div className="project-actions">
+              {project.appPath && (
+                <Link to={project.appPath}>
+                  打开工作台
+                  <ArrowUpRight size={16} />
+                </Link>
+              )}
+              <Link to={`/projects/${project.slug}`}>
+                项目详情
+                <ArrowUpRight size={16} />
+              </Link>
+              <a href={project.repoUrl} target="_blank" rel="noreferrer">
+                GitHub
+                <GitBranch size={16} />
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -217,7 +210,7 @@ function ProjectPage() {
 
   return (
     <section className="detail-page">
-      <Link className="back-link" to="/#projects">
+      <Link className="back-link" to="/projects">
         返回项目
       </Link>
       <p className="eyebrow">{project.status}</p>
