@@ -5,10 +5,9 @@ import {
   FlaskConical,
   GitBranch,
   Menu,
-  UserRound,
   X,
 } from 'lucide-react'
-import { type ChangeEvent, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import './App.css'
 import { projects } from './content/projects'
@@ -22,8 +21,6 @@ const navItems = [
 ]
 
 const KNOWLEDGE_AGENT_URL = import.meta.env.VITE_KNOWLEDGE_AGENT_URL || 'http://127.0.0.1:5174/'
-const AVATAR_STORAGE_KEY = 'portfolio-avatar-image'
-const DEFAULT_AVATAR_SRC = '/avatar/avatar.png'
 
 function ScrollToHash() {
   const location = useLocation()
@@ -124,138 +121,12 @@ function AppShell() {
 }
 
 function HomePage() {
-  const [resumeImageReady, setResumeImageReady] = useState(false)
-  const [defaultAvatarReady, setDefaultAvatarReady] = useState(false)
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(() => {
-    try {
-      return window.localStorage.getItem(AVATAR_STORAGE_KEY)
-    } catch {
-      return null
-    }
-  })
-
-  const visibleAvatarSrc = avatarSrc || (defaultAvatarReady ? DEFAULT_AVATAR_SRC : null)
-
-  function handleAvatarUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-
-    if (!file || !file.type.startsWith('image/')) {
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result !== 'string') {
-        return
-      }
-
-      setAvatarSrc(reader.result)
-
-      try {
-        window.localStorage.setItem(AVATAR_STORAGE_KEY, reader.result)
-      } catch {
-        // The preview still works for this session if browser storage is unavailable.
-      }
-    }
-    reader.readAsDataURL(file)
-    event.target.value = ''
-  }
-
   return (
     <>
       <section className="section resume-page" id="resume">
-        <div className="section-heading">
-          <h2>简历</h2>
-        </div>
-
-        <div className="resume-card">
-          <img
-            alt=""
-            hidden
-            src={DEFAULT_AVATAR_SRC}
-            onError={() => setDefaultAvatarReady(false)}
-            onLoad={() => setDefaultAvatarReady(true)}
-          />
-          <img
-            alt=""
-            hidden
-            src="/resume/resume.png"
-            onError={() => setResumeImageReady(false)}
-            onLoad={() => setResumeImageReady(true)}
-          />
-
-          <article className="resume-main">
-            <div className="resume-copy">
-              <div className="resume-title">
-                <div>
-                  <h3>{resume.name}</h3>
-                  <p>{resume.role}</p>
-                </div>
-              </div>
-
-              <p className="resume-summary">{resume.summary}</p>
-
-              <div className="focus-list" aria-label="Focus areas">
-                {resume.focus.map((item) => (
-                  <span key={item}>{item}</span>
-                ))}
-              </div>
-
-              <div className="resume-links">
-                {resume.links.map((link) => (
-                  <a href={link.href} key={link.href} target="_blank" rel="noreferrer">
-                    {link.label}
-                    <ArrowUpRight size={15} />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            <label className={`avatar-frame ${visibleAvatarSrc ? 'has-image' : ''}`}>
-              {visibleAvatarSrc ? (
-                <img alt={`${resume.name} avatar`} src={visibleAvatarSrc} />
-              ) : (
-                <span className="avatar-empty">
-                  <UserRound size={38} strokeWidth={1.5} />
-                  <span className="avatar-upload-copy">
-                    <span className="avatar-plus">+</span>
-                    上传头像
-                  </span>
-                </span>
-              )}
-              <input accept="image/*" onChange={handleAvatarUpload} type="file" />
-            </label>
-          </article>
-
-          {resumeImageReady && (
-            <aside className="resume-image-panel">
-              <img alt={`${resume.name} resume`} src="/resume/resume.png" />
-            </aside>
-          )}
-        </div>
-
-        <div className="resume-details">
-          {resume.skills.map((section) => (
-            <article className="detail-block" key={section.title}>
-              <h3>{section.title}</h3>
-              <ul>
-                {section.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-          {resume.timeline.map((section) => (
-            <article className="detail-block wide" key={section.title}>
-              <h3>{section.title}</h3>
-              <ul>
-                {section.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
+        <figure className="resume-document">
+          <img alt={`${resume.name} resume`} src="/resume/resume.jpg" />
+        </figure>
 
         <div className="resume-next">
           <a className="primary-action" href="#projects">

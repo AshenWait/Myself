@@ -1,6 +1,6 @@
 # Personal Portfolio
 
-AshenWait 的个人作品集网站，展示简历、项目和后续实验区。当前首个项目是 [Knowledge Agent](https://github.com/AshenWait/knowledge-agent)。
+杨鹏坤的个人作品集网站，展示简历图片、项目和后续实验区。当前首个项目是 [Knowledge Agent](https://github.com/AshenWait/knowledge-agent)。
 
 ## Tech Stack
 
@@ -29,12 +29,9 @@ npm run build
 
 - Resume content: `src/content/resume.ts`
 - Project content: `src/content/projects.ts`
-- Optional avatar image: `public/avatar/avatar.png`
-- Optional resume image: `public/resume/resume.png`
+- Resume page image: `public/resume/resume.jpg`
 
-If `public/avatar/avatar.png` exists and loads successfully, the homepage uses it as the default avatar. The avatar upload frame can also preview a local image in the browser.
-
-If `public/resume/resume.png` exists and loads successfully, the homepage displays it next to the resume. If it is absent, the image panel is hidden.
+The homepage resume section renders `public/resume/resume.jpg` as the complete resume page.
 
 ## Deploy To ECS
 

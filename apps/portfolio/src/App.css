@@ -140,8 +140,7 @@
   max-width: 780px;
 }
 
-.project-actions,
-.resume-links {
+.project-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -150,7 +149,6 @@
 
 .primary-action,
 .secondary-action,
-.resume-links a,
 .project-actions a {
   border: 1px solid var(--line-strong);
   font-weight: 750;
@@ -163,7 +161,6 @@
 }
 
 .secondary-action,
-.resume-links a,
 .project-actions a {
   background: var(--surface);
   color: var(--ink);
@@ -171,7 +168,6 @@
 
 .primary-action:hover,
 .secondary-action:hover,
-.resume-links a:hover,
 .project-actions a:hover,
 .github-link:hover,
 .back-link:hover {
@@ -222,13 +218,6 @@
   padding-top: clamp(76px, 9vw, 112px);
 }
 
-.resume-card {
-  display: grid;
-  gap: 22px;
-}
-
-.resume-main,
-.resume-image-panel,
 .detail-block,
 .project-card,
 .detail-columns article,
@@ -237,7 +226,6 @@
   border: 1px solid var(--line-strong);
 }
 
-.resume-main,
 .detail-block,
 .project-card,
 .detail-columns article,
@@ -245,26 +233,6 @@
   padding: 24px;
 }
 
-.resume-main {
-  align-items: start;
-  display: grid;
-  gap: 30px;
-  grid-template-columns: minmax(0, 1fr) minmax(210px, 260px);
-}
-
-.resume-copy {
-  grid-column: 1;
-  min-width: 0;
-}
-
-.resume-title {
-  align-items: start;
-  display: flex;
-  gap: 20px;
-  justify-content: space-between;
-}
-
-.resume-title p,
 .project-card-header p,
 .project-summary,
 .lab-strip p,
@@ -273,23 +241,12 @@
   color: var(--muted);
 }
 
-.resume-summary {
-  color: var(--muted);
-  margin-top: 22px;
-}
-
-.focus-list,
 .stack-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.focus-list {
-  margin-top: 24px;
-}
-
-.focus-list span,
 .stack-list span,
 .project-status {
   border: 1px solid var(--line-strong);
@@ -297,88 +254,18 @@
   padding: 6px 10px;
 }
 
-.focus-list span {
-  background: var(--soft-mint);
+.resume-document {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  margin: 0 auto;
+  max-width: 980px;
+  padding: clamp(10px, 1.5vw, 16px);
 }
 
-.avatar-frame {
-  align-items: center;
-  aspect-ratio: 1;
-  background:
-    linear-gradient(var(--surface), var(--surface)) padding-box,
-    linear-gradient(135deg, var(--ink), var(--accent), var(--mint)) border-box;
-  border: 2px solid transparent;
-  color: var(--muted);
-  cursor: pointer;
-  display: flex;
-  grid-column: 2;
-  justify-content: center;
-  overflow: hidden;
-  place-self: start end;
-  text-align: center;
+.resume-document img {
+  display: block;
+  height: auto;
   width: 100%;
-}
-
-.avatar-frame.has-image {
-  border-color: var(--line-strong);
-}
-
-.avatar-frame img {
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
-}
-
-.avatar-empty {
-  align-items: center;
-  display: grid;
-  gap: 16px;
-  justify-items: center;
-}
-
-.avatar-upload-copy {
-  align-items: center;
-  color: var(--ink);
-  display: inline-flex;
-  font-weight: 750;
-  gap: 8px;
-}
-
-.avatar-plus {
-  font-family: var(--mono);
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.avatar-frame:hover {
-  box-shadow: 5px 5px 0 var(--ink);
-  transform: translate(-2px, -2px);
-}
-
-.avatar-frame input {
-  display: none;
-}
-
-.resume-image-panel {
-  padding: 12px;
-}
-
-.resume-image-panel img {
-  aspect-ratio: 3 / 4;
-  border: 1px solid var(--line);
-  object-fit: cover;
-  width: 100%;
-}
-
-.resume-details {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(3, 1fr);
-  margin-top: 22px;
-}
-
-.detail-block.wide {
-  grid-column: span 3;
 }
 
 .resume-next {
@@ -542,18 +429,8 @@
     margin-left: 0;
   }
 
-  .resume-card,
-  .resume-main,
   .detail-columns {
     grid-template-columns: 1fr;
-  }
-
-  .resume-details {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-block.wide {
-    grid-column: auto;
   }
 
   .lab-strip {
@@ -587,28 +464,23 @@
     width: 38px;
   }
 
-  .metric-grid,
-  .resume-card,
-  .resume-main {
+  .metric-grid {
     grid-template-columns: 1fr;
   }
 
   .section-heading,
-  .resume-title,
   .project-card-header {
     align-items: start;
     flex-direction: column;
   }
 
-  .project-actions,
-  .resume-links {
+  .project-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
   .primary-action,
   .secondary-action,
-  .resume-links a,
   .project-actions a {
     justify-content: center;
     width: 100%;
