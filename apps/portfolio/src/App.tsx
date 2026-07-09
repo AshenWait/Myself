@@ -1,13 +1,17 @@
 import {
   ArrowUpRight,
   Blocks,
+  Download,
   FileText,
   FlaskConical,
   GitBranch,
   Menu,
+  Pencil,
+  RotateCcw,
+  Save,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import './App.css'
 import { projects } from './content/projects'
@@ -21,6 +25,104 @@ const navItems = [
 ]
 
 const KNOWLEDGE_AGENT_URL = import.meta.env.VITE_KNOWLEDGE_AGENT_URL || 'http://127.0.0.1:5174/'
+const RESUME_STORAGE_KEY = 'portfolio.resume.html'
+const DEFAULT_RESUME_HTML = createResumeHtml()
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+function linkText(href: string) {
+  return href.replace(/^mailto:/, '').replace(/^tel:\+?86?/, '')
+}
+
+function listItems(items: string[]) {
+  return items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
+}
+
+function createResumeHtml() {
+  const [education, ...projects] = resume.timeline
+
+  return `
+    <header class="resume-sheet-header">
+      <div>
+        <h1>${escapeHtml(resume.name)}</h1>
+        <p class="resume-role">${escapeHtml(resume.role)}</p>
+        <div class="resume-contact">
+          <span>城市：${escapeHtml(resume.location)}</span>
+          ${resume.links
+            .slice(0, 3)
+            .map(
+              (link) =>
+                `<a href="${escapeHtml(link.href)}" target="_blank" rel="noreferrer">${escapeHtml(link.label)}：${escapeHtml(
+                  linkText(link.href),
+                )}</a>`,
+            )
+            .join('')}
+        </div>
+      </div>
+    </header>
+
+    <section class="resume-section">
+      <h2>教育背景与资质证明</h2>
+      <div class="resume-split">
+        <div>
+          <h3>${escapeHtml(education.title)}</h3>
+          <ul>${listItems(education.items)}</ul>
+        </div>
+        <div>
+          <h3>主线能力</h3>
+          <ul>${listItems(resume.focus.slice(0, 4))}</ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="resume-section">
+      <h2>Positioning</h2>
+      <div class="resume-summary-grid">
+        <p>${escapeHtml(resume.summary)}</p>
+        <ul>${listItems(resume.focus.slice(4))}</ul>
+      </div>
+    </section>
+
+    <section class="resume-section">
+      <h2>技术能力</h2>
+      <div class="resume-skill-grid">
+        ${resume.skills
+          .map(
+            (section) => `
+              <div>
+                <h3>${escapeHtml(section.title)}</h3>
+                <p>${escapeHtml(section.items.join('、'))}</p>
+              </div>
+            `,
+          )
+          .join('')}
+      </div>
+    </section>
+
+    <section class="resume-section">
+      <h2>项目经历</h2>
+      <div class="resume-projects">
+        ${projects
+          .map(
+            (project) => `
+              <article>
+                <h3>${escapeHtml(project.title)}</h3>
+                <ul>${listItems(project.items)}</ul>
+              </article>
+            `,
+          )
+          .join('')}
+      </div>
+    </section>
+  `
+}
 
 function ScrollToHash() {
   const location = useLocation()
@@ -122,12 +224,63 @@ function AppShell() {
 }
 
 function HomePage() {
+  const resumeRef = useRef<HTMLElement>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [resumeHtml, setResumeHtml] = useState(() => localStorage.getItem(RESUME_STORAGE_KEY) || DEFAULT_RESUME_HTML)
+
+  const saveResume = () => {
+    const nextHtml = resumeRef.current?.innerHTML || DEFAULT_RESUME_HTML
+    localStorage.setItem(RESUME_STORAGE_KEY, nextHtml)
+    setResumeHtml(nextHtml)
+    setIsEditing(false)
+  }
+
+  const resetResume = () => {
+    localStorage.removeItem(RESUME_STORAGE_KEY)
+    setResumeHtml(DEFAULT_RESUME_HTML)
+    setIsEditing(false)
+  }
+
+  const autosaveResume = () => {
+    if (resumeRef.current) {
+      localStorage.setItem(RESUME_STORAGE_KEY, resumeRef.current.innerHTML)
+    }
+  }
+
   return (
     <>
       <section className="section resume-page" id="resume">
-        <figure className="resume-document">
-          <img alt={`${resume.name} resume`} src="/resume/resume.jpg" />
-        </figure>
+        <div className="resume-toolbar" aria-label="Resume actions">
+          <button
+            className={isEditing ? 'primary-action' : 'secondary-action'}
+            onClick={() => setIsEditing((editing) => !editing)}
+            type="button"
+          >
+            <Pencil size={16} />
+            {isEditing ? '退出编辑' : '编辑简历'}
+          </button>
+          <button className="secondary-action" onClick={saveResume} type="button">
+            <Save size={16} />
+            保存
+          </button>
+          <button className="secondary-action" onClick={resetResume} type="button">
+            <RotateCcw size={16} />
+            恢复默认
+          </button>
+          <a className="secondary-action" href="/resume/resume.pdf" target="_blank" rel="noreferrer">
+            <Download size={16} />
+            PDF
+          </a>
+        </div>
+
+        <article
+          className={`resume-sheet ${isEditing ? 'is-editing' : ''}`}
+          contentEditable={isEditing}
+          dangerouslySetInnerHTML={{ __html: resumeHtml }}
+          onInput={autosaveResume}
+          ref={resumeRef}
+          suppressContentEditableWarning
+        />
 
         <div className="resume-next">
           <Link className="primary-action" to="/projects">

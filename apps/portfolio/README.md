@@ -1,6 +1,6 @@
 # Personal Portfolio
 
-杨鹏坤的个人作品集网站，展示简历图片、项目和后续实验区。当前首个项目是 [Knowledge Agent](https://github.com/AshenWait/knowledge-agent)。
+杨鹏坤的个人作品集网站，展示可编辑网页简历、项目和后续实验区。当前首个项目是 [Knowledge Agent](https://github.com/AshenWait/knowledge-agent)。
 
 ## Tech Stack
 
@@ -29,9 +29,9 @@ npm run build
 
 - Resume content: `src/content/resume.ts`
 - Project content: `src/content/projects.ts`
-- Resume page image: `public/resume/resume.jpg`
+- Resume PDF backup: `public/resume/resume.pdf`
 
-The homepage resume section renders `public/resume/resume.jpg` as the complete resume page.
+The homepage renders the resume as editable HTML. Browser edits are stored in localStorage; the PDF is kept only as a backup link.
 
 ## Deploy To ECS
 
