@@ -288,7 +288,6 @@ function App() {
     <main className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Knowledge Agent · 第 5 周</p>
           <h1>知识库问答工作台</h1>
         </div>
         <div className="status-pill">前后端联调中</div>
