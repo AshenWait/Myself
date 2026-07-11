@@ -9,6 +9,14 @@
 
 ## Common Commands
 
+一键启动本地开发环境：
+
+```powershell
+.\scripts\start-dev.ps1
+```
+
+这个脚本会启动作品集 `http://127.0.0.1:5173/` 和 Knowledge Agent 前端 `http://127.0.0.1:5174/`。如果 `apps/knowledge-agent/.env` 已配置且 Docker Desktop 正在运行，也会启动 Knowledge Agent 后端和数据库。
+
 作品集：
 
 ```powershell
