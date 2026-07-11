@@ -181,12 +181,18 @@ h3 {
   margin-top: 12px;
 }
 
+.selected-files {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.selected-files-header,
 .selected-file {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 12px;
   border: 1px solid #dbeafe;
   border-radius: 8px;
   padding: 10px 12px;
@@ -194,6 +200,11 @@ h3 {
   color: #1e3a8a;
   font-size: 14px;
   font-weight: 700;
+}
+
+.selected-files-header {
+  border-color: #bfdbfe;
+  background: #dbeafe;
 }
 
 .selected-file span {

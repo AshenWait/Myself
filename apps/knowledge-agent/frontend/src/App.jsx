@@ -24,7 +24,7 @@ async function readError(response) {
 function App() {
   const [documents, setDocuments] = useState([])
   const [selectedDocumentId, setSelectedDocumentId] = useState('')
-  const [selectedFile, setSelectedFile] = useState(null)
+  const [selectedFiles, setSelectedFiles] = useState([])
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const [question, setQuestion] = useState('这个文档是做什么用的？')
   const [answer, setAnswer] = useState('')
@@ -74,54 +74,102 @@ function App() {
     loadDocuments()
   }, [loadDocuments])
 
+  async function uploadFiles(filesToUpload) {
+    if (filesToUpload.length === 0) {
+      return []
+    }
+
+    setIsUploading(true)
+    const uploadedDocuments = []
+
+    try {
+      for (const file of filesToUpload) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          throw new Error(await readError(response))
+        }
+
+        uploadedDocuments.push(await response.json())
+      }
+
+      setSelectedFiles((currentFiles) =>
+        currentFiles.filter((file) => !filesToUpload.includes(file)),
+      )
+      await loadDocuments()
+      if (uploadedDocuments.length === 1) {
+        setSelectedDocumentId(String(uploadedDocuments[0].document_id))
+      } else {
+        setSelectedDocumentId('')
+      }
+      setNotice(`已上传 ${uploadedDocuments.length} 个文件到知识库`)
+      return uploadedDocuments
+    } catch (err) {
+      if (uploadedDocuments.length > 0) {
+        const uploadedFiles = filesToUpload.slice(0, uploadedDocuments.length)
+        setSelectedFiles((currentFiles) =>
+          currentFiles.filter((file) => !uploadedFiles.includes(file)),
+        )
+        await loadDocuments()
+      }
+      throw err
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   async function handleUpload(event) {
     event.preventDefault()
 
-    if (!selectedFile) {
-      setError('请先选择一个文件')
+    if (selectedFiles.length === 0) {
+      setError('请先添加文件')
       return
     }
 
-    const formData = new FormData()
-    formData.append('file', selectedFile)
-    setIsUploading(true)
     setNotice('')
     setError('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error(await readError(response))
-      }
-
-      const uploaded = await response.json()
-      setNotice(`上传成功：${uploaded.filename}`)
-      setSelectedFile(null)
-      await loadDocuments()
-      setSelectedDocumentId(String(uploaded.document_id))
+      await uploadFiles(selectedFiles)
     } catch (err) {
       setError(err.message)
-    } finally {
-      setIsUploading(false)
     }
   }
 
-  function pickFile(file) {
-    if (!file) {
-      setSelectedFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+  function addFiles(fileList) {
+    const files = Array.from(fileList || [])
+    if (files.length === 0) {
       return
     }
 
-    setSelectedFile(file)
-    setNotice(`已选择：${file.name}`)
+    setSelectedFiles((currentFiles) => [...currentFiles, ...files])
+    setNotice(`已添加 ${files.length} 个文件，发送问题前会自动上传`)
     setError('')
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  function removeSelectedFile(index) {
+    setSelectedFiles((currentFiles) =>
+      currentFiles.filter((_, fileIndex) => fileIndex !== index),
+    )
+  }
+
+  function clearSelectedFiles() {
+    setSelectedFiles([])
+    setNotice('')
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   function handleDragOver(event) {
@@ -140,8 +188,7 @@ function App() {
     event.preventDefault()
     setIsDraggingFile(false)
 
-    const file = event.dataTransfer.files?.[0]
-    pickFile(file || null)
+    addFiles(event.dataTransfer.files)
   }
   //根据 run_id 调后端 trace API，把步骤加载到页面
   async function loadTrace(runId) {
@@ -184,13 +231,23 @@ function App() {
     setNotice('')
     setError('')
 
-    const payload = {
-      message: trimmedQuestion,
-      document_id: selectedDocumentId ? Number(selectedDocumentId) : null,
-      session_id: sessionId,
-    }
-
     try {
+      const uploadedDocuments = await uploadFiles(selectedFiles)
+      const documentId =
+        uploadedDocuments.length === 1
+          ? uploadedDocuments[0].document_id
+          : uploadedDocuments.length > 1
+            ? null
+            : selectedDocumentId
+              ? Number(selectedDocumentId)
+              : null
+
+      const payload = {
+        message: trimmedQuestion,
+        document_id: documentId,
+        session_id: sessionId,
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
@@ -260,39 +317,57 @@ function App() {
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 accept=".txt,.md,.markdown,.pdf"
                 onChange={(event) => {
-                  const file = event.target.files?.[0]
-                  pickFile(file || null)
+                  addFiles(event.target.files)
                 }}
               />
               <span className="upload-icon">+</span>
-              <strong>{selectedFile?.name || '拖入文件或点击选择'}</strong>
+              <strong>
+                {selectedFiles.length > 0
+                  ? `已添加 ${selectedFiles.length} 个文件`
+                  : '拖入文件或点击选择'}
+              </strong>
               <small>支持 PDF、TXT、Markdown，最大 10MB</small>
               <span className="upload-hint">
-                {isDraggingFile ? '松开鼠标即可添加文件' : '拖拽文件到这里会自动选中'}
+                {isDraggingFile ? '松开鼠标即可添加文件' : '可多选，发送问题前会自动上传'}
               </span>
             </label>
 
-            {selectedFile && (
-              <div className="selected-file">
-                <span>{selectedFile.name}</span>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => pickFile(null)}
-                >
-                  移除
-                </button>
+            {selectedFiles.length > 0 && (
+              <div className="selected-files">
+                <div className="selected-files-header">
+                  <span>待上传文件</span>
+                  <button type="button" className="text-button" onClick={clearSelectedFiles}>
+                    清空
+                  </button>
+                </div>
+                {selectedFiles.map((file, index) => (
+                  <div className="selected-file" key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
+                    <span>{file.name}</span>
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => removeSelectedFile(index)}
+                    >
+                      移除
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
             <button
               className="full-button"
               type="submit"
-              disabled={isUploading}
+              disabled={isUploading || isAsking || selectedFiles.length === 0}
             >
-              {isUploading ? '上传并入库中...' : '上传到知识库'}
+              {isUploading
+                ? '上传并入库中...'
+                : selectedFiles.length > 0
+                  ? `上传 ${selectedFiles.length} 个文件到知识库`
+                  : '上传到知识库'}
             </button>
           </form>
 
@@ -361,8 +436,16 @@ function App() {
           </label>
 
           <div className="actions">
-            <button type="button" onClick={handleAsk} disabled={isAsking}>
-              {isAsking ? '思考中...' : '发送问题'}
+            <button type="button" onClick={handleAsk} disabled={isAsking || isUploading}>
+              {isUploading
+                ? '上传中...'
+                : isAsking
+                  ? selectedFiles.length > 0
+                    ? '上传并思考中...'
+                    : '思考中...'
+                : selectedFiles.length > 0
+                  ? '上传文件并发送问题'
+                  : '发送问题'}
             </button>
             <button type="button" className="secondary" onClick={clearQuestion}>
               清空

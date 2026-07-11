@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -25,7 +26,8 @@ def upload_document(
 ) -> dict[str, str | int | None]:
     """上传文档，完成文件校验、解析、切分、生成向量，并保存文档与 chunk。"""
     # 类型检验/限制大小
-    suffix = Path(file.filename).suffix.lower()
+    filename = Path(file.filename or "upload").name
+    suffix = Path(filename).suffix.lower()
     if suffix not in ALLOWED_SUFFIXES:
         raise HTTPException(status_code=400, detail="只支持上传 PDF、txt、markdown 文件")
 
@@ -37,12 +39,14 @@ def upload_document(
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="文件不能超过 10MB")
 
-    file_path = UPLOAD_DIR / file.filename  # 拼接路径
+    file_path = UPLOAD_DIR / filename  # 拼接路径
+    if file_path.exists():
+        file_path = UPLOAD_DIR / f"{file_path.stem}-{uuid4().hex[:8]}{file_path.suffix}"
     file_path.write_bytes(content)  # 保存上传文件
 
     #解析文件拿到列表数据[{页码：文本}]
     try:
-        pages = parse_document(str(file_path), file.filename)  # 解析文档，返回统一列表list[dict[str, int | str]]
+        pages = parse_document(str(file_path), filename)  # 解析文档，返回统一列表list[dict[str, int | str]]
     except Exception as exc:
         raise HTTPException(status_code=400, detail="文档解析失败，请检查文件是否损坏") from exc
 
@@ -54,7 +58,7 @@ def upload_document(
 
     # 保存文档元数据到数据库
     document = service.create_document(
-        filename=file.filename,
+        filename=filename,
         file_path=str(file_path),
         content_type=file.content_type or "",
         page_count=len(pages),
@@ -73,7 +77,7 @@ def upload_document(
     saved_chunks = service.create_chunks(document.id, chunks)
     return {
         "document_id": document.id,
-        "filename": file.filename,
+        "filename": filename,
         "content_type": file.content_type,
         "file_path": str(file_path),
         "page_count": len(pages),
