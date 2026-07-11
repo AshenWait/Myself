@@ -24,7 +24,9 @@ const navItems = [
   { label: 'Lab', href: '/lab', icon: FlaskConical },
 ]
 
-const KNOWLEDGE_AGENT_URL = import.meta.env.VITE_KNOWLEDGE_AGENT_URL || 'http://127.0.0.1:5174/'
+const KNOWLEDGE_AGENT_URL =
+  import.meta.env.VITE_KNOWLEDGE_AGENT_URL ||
+  (import.meta.env.DEV ? 'http://127.0.0.1:5174/' : '/knowledge-agent-app/')
 const RESUME_STORAGE_KEY = 'portfolio.resume.html'
 const DEFAULT_RESUME_HTML = createResumeHtml()
 
