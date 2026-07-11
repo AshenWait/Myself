@@ -11,7 +11,7 @@ from app.services.output_guardrails import (
     check_answer_output,
     log_output_check,
 )
-from app.services.trace import TraceRecorder
+from app.services.trace import TraceRecorder, elapsed_ms, now_ms
 
 
 
@@ -129,6 +129,7 @@ class ChatService:
         session_id: int | None = None,
     ) -> tuple[str, float, list[dict[str, int | str | float]], str]:
         """执行一次 RAG 问答，返回模型回答、耗时和引用来源。"""
+        retrieval_start_ms = now_ms()
         query_embedding = self.embedding.embed_text(user_message)   #问题转向量
         # 相似度搜索返回 [(chunk1, 0.12), (chunk2, 0.35)]，distance 越小越相关
         chunk_results = self.document_service.search_similar_chunks(
@@ -142,6 +143,29 @@ class ChatService:
             for chunk, distance in chunk_results
             if distance <= settings.max_rag_distance
         ]
+        self.trace_recorder.record(
+            tool_name="retrieve_documents",
+            input_data={
+                "type": "rag_retrieval",
+                "query": user_message,
+                "document_id": document_id,
+                "limit": settings.rag_top_k,
+            },
+            output_data={
+                "retrieved_count": len(chunk_results),
+                "relevant_count": len(relevant_results),
+                "preview": [
+                    {
+                        "chunk_id": chunk.id,
+                        "document_id": chunk.document_id,
+                        "distance": distance,
+                    }
+                    for chunk, distance in relevant_results[:3]
+                ],
+            },
+            latency_ms=elapsed_ms(retrieval_start_ms),
+            status="success",
+        )
         if not relevant_results:
             answer = "我在已上传文档里没有找到足够信息。"
             output_result = check_answer_output(answer, [])
@@ -180,6 +204,18 @@ class ChatService:
         #访问大模型,回答与请求耗时
         answer, latency = self.llm.chat(prompt)
         #返回给响应体
+        sources = self.build_sources(relevant_results)
+
+        output_result = check_answer_output(answer, sources)
+        log_output_check(self.db, user_message, answer, output_result)
+
+        if not output_result.allowed:
+            return build_output_refusal(output_result), latency, [], self.trace_recorder.run_id
+
+        return answer, latency, sources, self.trace_recorder.run_id
+
+    def build_sources(self, relevant_results) -> list[dict[str, int | str | float]]:
+        """把检索命中的 chunk 转成前端引用来源结构。"""
         sources = []
         for chunk, distance in relevant_results:
             document = self.document_service.get_document(chunk.document_id)
@@ -194,12 +230,5 @@ class ChatService:
                     "distance": distance,
                 }
             )
-
-        output_result = check_answer_output(answer, sources)
-        log_output_check(self.db, user_message, answer, output_result)
-
-        if not output_result.allowed:
-            return build_output_refusal(output_result), latency, [], self.trace_recorder.run_id
-
-        return answer, latency, sources, self.trace_recorder.run_id
+        return sources
 

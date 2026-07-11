@@ -414,22 +414,6 @@ function ProjectPage() {
 function KnowledgeAgentPage() {
   return (
     <section className="agent-page">
-      <div className="agent-topbar">
-        <div>
-          <p className="eyebrow">Knowledge Agent</p>
-          <h1>知识库问答工作台</h1>
-        </div>
-        <div className="agent-actions">
-          <Link className="secondary-action" to="/projects/knowledge-agent">
-            项目详情
-          </Link>
-          <a className="primary-action" href={KNOWLEDGE_AGENT_URL} target="_blank" rel="noreferrer">
-            新窗口打开
-            <ArrowUpRight size={17} />
-          </a>
-        </div>
-      </div>
-
       <div className="agent-frame-wrap">
         <iframe
           className="agent-frame"

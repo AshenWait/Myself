@@ -249,7 +249,7 @@ function App() {
         session_id: sessionId,
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -261,15 +261,69 @@ function App() {
         throw new Error(await readError(response))
       }
 
-      const data = await response.json()
-      setAnswer(data.reply)
-      setSources(data.sources)
-      setSessionId(data.session_id)
-      setTraceRunId(data.run_id || '')
-      if (data.run_id) {
-        await loadTrace(data.run_id)
+      if (!response.body) {
+        throw new Error('浏览器不支持流式响应')
       }
-      setNotice(`回答完成，耗时 ${data.latency_ms} ms`)
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let finalRunId = ''
+      let finalNotice = ''
+
+      const handleStreamEvent = (event) => {
+        if (event.type === 'meta') {
+          setSessionId(event.session_id)
+          setTraceRunId(event.run_id || '')
+          finalRunId = event.run_id || ''
+          return
+        }
+
+        if (event.type === 'chunk') {
+          setAnswer((currentAnswer) => currentAnswer + event.text)
+          return
+        }
+
+        if (event.type === 'done') {
+          setSources(event.sources || [])
+          setSessionId(event.session_id)
+          setTraceRunId(event.run_id || '')
+          finalRunId = event.run_id || ''
+          finalNotice = `回答完成，耗时 ${event.latency_ms} ms`
+          return
+        }
+
+        if (event.type === 'error') {
+          throw new Error(event.message || '流式回答失败')
+        }
+      }
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) {
+          break
+        }
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.trim()) {
+            handleStreamEvent(JSON.parse(line))
+          }
+        }
+      }
+
+      buffer += decoder.decode()
+      if (buffer.trim()) {
+        handleStreamEvent(JSON.parse(buffer))
+      }
+
+      if (finalRunId) {
+        await loadTrace(finalRunId)
+      }
+      setNotice(finalNotice || '回答完成')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -323,8 +377,9 @@ function App() {
       <header className="app-header">
         <div>
           <h1>知识库问答工作台</h1>
+          <p>上传资料后直接提问，回答会实时生成。</p>
         </div>
-        <div className="status-pill">前后端联调中</div>
+        <div className="status-pill">流式输出</div>
       </header>
 
       {(notice || error) && (
@@ -334,10 +389,13 @@ function App() {
       )}
 
       <section className="workspace" aria-label="知识库问答工作台">
-        <aside className="panel side-panel">
+        <aside className="library-panel">
           <div className="panel-heading">
-            <p className="eyebrow">文档</p>
-            <h2>上传资料</h2>
+            <div>
+              <p className="eyebrow">文档</p>
+              <h2>知识库</h2>
+            </div>
+            <span>{isLoadingDocuments ? '刷新中' : `${documents.length} 个`}</span>
           </div>
 
           <form onSubmit={handleUpload}>
@@ -360,11 +418,11 @@ function App() {
               <strong>
                 {selectedFiles.length > 0
                   ? `已添加 ${selectedFiles.length} 个文件`
-                  : '拖入文件或点击选择'}
+                  : '添加资料'}
               </strong>
-              <small>支持 PDF、TXT、Markdown，最大 10MB</small>
+              <small>PDF / TXT / Markdown · 10MB</small>
               <span className="upload-hint">
-                {isDraggingFile ? '松开鼠标即可添加文件' : '可多选，发送问题前会自动上传'}
+                {isDraggingFile ? '松开即可添加' : '可多选，提问前自动上传'}
               </span>
             </label>
 
@@ -407,7 +465,6 @@ function App() {
           <div className="document-list" aria-label="文档列表">
             <div className="list-title">
               <h2>文档列表</h2>
-              <span>{isLoadingDocuments ? '刷新中' : `${documents.length} 个`}</span>
             </div>
 
             {documents.length === 0 && !isLoadingDocuments ? (
@@ -448,8 +505,8 @@ function App() {
           </div>
         </aside>
 
-        <section className="panel chat-panel">
-          <div className="panel-heading row-heading">
+        <section className="chat-panel">
+          <div className="chat-toolbar">
             <div>
               <p className="eyebrow">RAG 问答</p>
               <h2>向知识库提问</h2>
@@ -471,34 +528,36 @@ function App() {
             </label>
           </div>
 
-          <label className="question-area">
-            <span>问题</span>
+          <section className="question-card">
+            <label className="question-area">
+              <span>问题</span>
             <textarea
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               placeholder="例如：这个文档主要讲了什么？"
-              rows="5"
+                rows="4"
             />
-          </label>
+            </label>
 
-          <div className="actions">
-            <button type="button" onClick={handleAsk} disabled={isAsking || isUploading}>
-              {isUploading
-                ? '上传中...'
-                : isAsking
-                  ? selectedFiles.length > 0
-                    ? '上传并思考中...'
-                    : '思考中...'
-                : selectedFiles.length > 0
-                  ? '上传文件并发送问题'
-                  : '发送问题'}
-            </button>
-            <button type="button" className="secondary" onClick={clearQuestion}>
-              清空
-            </button>
-          </div>
+            <div className="actions">
+              <button type="button" onClick={handleAsk} disabled={isAsking || isUploading}>
+                {isUploading
+                  ? '上传中...'
+                  : isAsking
+                    ? selectedFiles.length > 0
+                      ? '上传并生成中...'
+                      : '生成中...'
+                  : selectedFiles.length > 0
+                    ? '上传并提问'
+                    : '发送问题'}
+              </button>
+              <button type="button" className="secondary" onClick={clearQuestion}>
+                清空
+              </button>
+            </div>
+          </section>
 
-          <section className="answer-box" aria-label="回答区">
+          <section className={`answer-box ${isAsking ? 'streaming' : ''}`} aria-label="回答区">
             <div className="answer-header">
               <h2>回答区</h2>
               <span>
@@ -506,74 +565,68 @@ function App() {
               </span>
             </div>
             <p>
-              {isAsking
-                ? '正在检索资料并生成回答...'
-                : answer || '回答会显示在这里。'}
+              {answer || (isAsking ? '正在检索资料并生成回答...' : '回答会显示在这里。')}
             </p>
           </section>
 
-          <section className="sources-box" aria-label="引用来源">
-            <h2>引用来源</h2>
-            {sources.length === 0 ? (
-              <p className="empty-state">暂无引用来源。</p>
-            ) : (
-              sources.map((source) => (
-                <details className="source-card" key={source.chunk_id} open>
-                  <summary className="source-row">
-                    <span>{source.document_filename}</span>
-                    <span>
-                      第 {source.page_number} 页 · distance{' '}
-                      {source.distance.toFixed(4)}
-                    </span>
-                  </summary>
-                  <p>{source.content}</p>
-                </details>
-              ))
-            )}
-          </section>
-          <section className="trace-box" aria-label="Trace 步骤">
-            <div className="trace-header">
-              <div>
-                <h2>Trace 步骤</h2>
-                <p>查看本次请求每一步做了什么</p>
+          <div className="support-grid">
+            <section className="sources-box" aria-label="引用来源">
+              <div className="box-heading">
+                <h2>引用来源</h2>
+                <span>{sources.length} 条</span>
               </div>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => loadTrace(traceRunId)}
-                disabled={isLoadingTrace || !traceRunId}
-              >
-                {isLoadingTrace ? '加载中...' : '刷新 Trace'}
-              </button>
-            </div>
-
-            <label className="trace-run-input">
-              run_id
-              <input
-                value={traceRunId}
-                onChange={(event) => setTraceRunId(event.target.value)}
-                placeholder="回答后会自动填入 run_id"
-              />
-            </label>
-
-            {traceSteps.length === 0 ? (
-              <p className="empty-state">暂无 Trace 步骤。</p>
-            ) : (
-              <div className="trace-list">
-                {traceSteps.map((step) => (
-                  <details className="trace-card" key={step.id}>
-                    <summary>
-                      <span>Step {step.step}</span>
-                      <span>{step.status}</span>
+              {sources.length === 0 ? (
+                <p className="empty-state">暂无引用来源。</p>
+              ) : (
+                sources.map((source) => (
+                  <details className="source-card" key={source.chunk_id}>
+                    <summary className="source-row">
+                      <span>{source.document_filename}</span>
+                      <span>
+                        第 {source.page_number} 页 · {source.distance.toFixed(4)}
+                      </span>
                     </summary>
-                    <p>工具：{step.tool_name || '模型或系统步骤'}</p>
-                    <p>耗时：{step.latency_ms.toFixed(2)} ms</p>
-                    <pre>{JSON.stringify({ input: step.input, output: step.output }, null, 2)}</pre>
+                    <p>{source.content}</p>
                   </details>
-                ))}
+                ))
+              )}
+            </section>
+
+            <section className="trace-box" aria-label="Trace 步骤">
+              <div className="trace-header">
+                <div>
+                  <h2>Trace</h2>
+                  <p>{traceRunId || '等待本次请求'}</p>
+                </div>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => loadTrace(traceRunId)}
+                  disabled={isLoadingTrace || !traceRunId}
+                >
+                  {isLoadingTrace ? '加载中' : '刷新'}
+                </button>
               </div>
-            )}
-          </section>
+
+              {traceSteps.length === 0 ? (
+                <p className="empty-state">暂无 Trace 步骤。</p>
+              ) : (
+                <div className="trace-list">
+                  {traceSteps.map((step) => (
+                    <details className="trace-card" key={step.id}>
+                      <summary>
+                        <span>Step {step.step}</span>
+                        <span>{step.status}</span>
+                      </summary>
+                      <p>工具：{step.tool_name || '模型或系统步骤'}</p>
+                      <p>耗时：{step.latency_ms.toFixed(2)} ms</p>
+                      <pre>{JSON.stringify({ input: step.input, output: step.output }, null, 2)}</pre>
+                    </details>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
 
         </section>
       </section>

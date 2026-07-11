@@ -1,9 +1,6 @@
 :root {
   color: #1f2937;
-  background:
-    linear-gradient(135deg, rgba(219, 234, 254, 0.8), transparent 38%),
-    linear-gradient(315deg, rgba(220, 252, 231, 0.7), transparent 34%),
-    #f3f6fb;
+  background: #f6f8f4;
   font-family:
     'Microsoft YaHei',
     'PingFang SC',

@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.responses import StreamingResponse
@@ -11,7 +13,9 @@ from app.schemas.chat import (
     ChatSessionResponse,
     RagCallLogResponse,
 )
+from app.services.output_guardrails import check_answer_output, log_output_check
 from app.services.chat import ChatService
+from app.services.trace import elapsed_ms, now_ms, preview_text
 
 #前台接待员”：收请求、校验格式、调用 service
 
@@ -80,7 +84,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
 
 @router.post("/chat/stream")
 def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
-    """处理流式 RAG 聊天：边接收模型输出边返回文本，并在结束后保存完整回答。"""
+    """处理流式 RAG 聊天：用 NDJSON 返回 meta、文本片段和完成信息。"""
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="消息不能为空")
 
@@ -92,6 +96,11 @@ def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
 
     service = ChatService(db)
 
+    if request.document_id is not None:
+        document = service.document_service.get_document(request.document_id)
+        if document is None:
+            raise HTTPException(status_code=404, detail="文档不存在")
+
     if request.session_id is None:
         title = service.build_session_title(request.message)
         chat_session = service.create_session(title)
@@ -101,12 +110,17 @@ def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="聊天会话不存在")
 
     chat_session_id = chat_session.id
-    service.add_message(chat_session_id, "user", request.message)
+    user_message = service.add_message(chat_session_id, "user", request.message)
+
+    def event_payload(payload: dict) -> str:
+        return json.dumps(payload, ensure_ascii=False) + "\n"
 
     def generate():
         """生成流式响应内容，并把每段模型输出拼成最终答案保存。"""
+        total_start_ms = now_ms()
         answer_parts = []
 
+        retrieval_start_ms = now_ms()
         query_embedding = service.embedding.embed_text(request.message)
         chunk_results = service.document_service.search_similar_chunks(
             query_embedding,
@@ -119,13 +133,68 @@ def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
             for chunk, distance in chunk_results
             if distance <= settings.max_rag_distance
         ]
+        service.trace_recorder.record(
+            tool_name="retrieve_documents",
+            input_data={
+                "type": "rag_retrieval",
+                "query": request.message,
+                "document_id": request.document_id,
+                "limit": settings.rag_top_k,
+            },
+            output_data={
+                "retrieved_count": len(chunk_results),
+                "relevant_count": len(relevant_results),
+                "preview": [
+                    {
+                        "chunk_id": chunk.id,
+                        "document_id": chunk.document_id,
+                        "distance": distance,
+                    }
+                    for chunk, distance in relevant_results[:3]
+                ],
+            },
+            latency_ms=elapsed_ms(retrieval_start_ms),
+            status="success",
+        )
+
+        run_id = service.trace_recorder.run_id
+        yield event_payload(
+            {
+                "type": "meta",
+                "session_id": chat_session_id,
+                "user_message_id": user_message.id,
+                "run_id": run_id,
+            }
+        )
 
         if not relevant_results:
             answer = "我在已上传文档里没有找到足够信息。"
-            service.add_message(chat_session_id, "assistant", answer)
-            yield answer
+            output_result = check_answer_output(answer, [])
+            log_output_check(db, request.message, answer, output_result)
+            assistant_message = service.add_message(chat_session_id, "assistant", answer)
+            latency_ms = int(elapsed_ms(total_start_ms))
+            service.add_rag_log(
+                session_id=chat_session_id,
+                question=request.message,
+                answer=answer,
+                latency_ms=latency_ms,
+                retrieved_chunks=[],
+            )
+            yield event_payload({"type": "chunk", "text": answer})
+            yield event_payload(
+                {
+                    "type": "done",
+                    "reply": answer,
+                    "session_id": chat_session_id,
+                    "assistant_message_id": assistant_message.id,
+                    "latency_ms": latency_ms,
+                    "sources": [],
+                    "run_id": run_id,
+                }
+            )
             return
 
+        sources = service.build_sources(relevant_results)
         context = "\n\n".join(
             f"资料{index + 1}:\n{chunk.content}"
             for index, (chunk, distance) in enumerate(relevant_results)
@@ -143,14 +212,70 @@ def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
 {request.message}
 """
 
-        for part in service.llm.stream_chat(prompt):
-            answer_parts.append(part)
-            yield part
+        llm_start_ms = now_ms()
+        try:
+            for part in service.llm.stream_chat(prompt):
+                answer_parts.append(part)
+                yield event_payload({"type": "chunk", "text": part})
+        except Exception as exc:
+            service.trace_recorder.record(
+                tool_name=None,
+                input_data={
+                    "type": "llm_call",
+                    "model": service.llm.model if hasattr(service.llm, "model") else "deepseek-v4-pro",
+                    "prompt_preview": preview_text(prompt),
+                },
+                output_data={"error": str(exc)},
+                latency_ms=elapsed_ms(llm_start_ms),
+                status="failed",
+            )
+            yield event_payload({"type": "error", "message": str(exc)})
+            return
 
         full_answer = "".join(answer_parts)
-        service.add_message(chat_session_id, "assistant", full_answer)
+        llm_latency_ms = elapsed_ms(llm_start_ms)
+        service.trace_recorder.record(
+            tool_name=None,
+            input_data={
+                "type": "llm_call",
+                "model": "deepseek-v4-pro",
+                "prompt_preview": preview_text(prompt),
+            },
+            output_data={
+                "answer_preview": preview_text(full_answer),
+                "prompt_tokens": None,
+                "completion_tokens": None,
+                "total_tokens": None,
+            },
+            latency_ms=llm_latency_ms,
+            status="success",
+        )
 
-    return StreamingResponse(generate(), media_type="text/plain")
+        output_result = check_answer_output(full_answer, sources)
+        log_output_check(db, request.message, full_answer, output_result)
+
+        assistant_message = service.add_message(chat_session_id, "assistant", full_answer)
+        latency_ms = int(elapsed_ms(total_start_ms))
+        service.add_rag_log(
+            session_id=chat_session_id,
+            question=request.message,
+            answer=full_answer,
+            latency_ms=latency_ms,
+            retrieved_chunks=sources,
+        )
+        yield event_payload(
+            {
+                "type": "done",
+                "reply": full_answer,
+                "session_id": chat_session_id,
+                "assistant_message_id": assistant_message.id,
+                "latency_ms": latency_ms,
+                "sources": sources,
+                "run_id": run_id,
+            }
+        )
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 
 @router.get("/chat/sessions", response_model=list[ChatSessionResponse])
