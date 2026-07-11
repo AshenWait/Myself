@@ -33,6 +33,7 @@ function App() {
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isAsking, setIsAsking] = useState(false)
+  const [deletingDocumentId, setDeletingDocumentId] = useState(null)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [traceRunId, setTraceRunId] = useState('')
@@ -284,6 +285,39 @@ function App() {
     setNotice('')
   }
 
+  async function handleDeleteDocument(document) {
+    const confirmed = window.confirm(`确定删除「${document.filename}」吗？`)
+    if (!confirmed) {
+      return
+    }
+
+    setDeletingDocumentId(document.id)
+    setNotice('')
+    setError('')
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${document.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error(await readError(response))
+      }
+
+      setDocuments((currentDocuments) =>
+        currentDocuments.filter((item) => item.id !== document.id),
+      )
+      if (selectedDocumentId === String(document.id)) {
+        setSelectedDocumentId('')
+      }
+      setNotice(`已删除文档：${document.filename}`)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setDeletingDocumentId(null)
+    }
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -380,22 +414,35 @@ function App() {
               <p className="empty-state">还没有文档，先上传一份资料。</p>
             ) : (
               documents.map((document) => (
-                <button
+                <div
                   className={`document-item ${
                     String(document.id) === selectedDocumentId ? 'active' : ''
                   }`}
                   key={document.id}
-                  type="button"
-                  onClick={() => setSelectedDocumentId(String(document.id))}
                 >
-                  <div>
-                    <h3>{document.filename}</h3>
-                    <p>
-                      {document.page_count} 页 · {formatDate(document.created_at)}
-                    </p>
-                  </div>
-                  <span>#{document.id}</span>
-                </button>
+                  <button
+                    className="document-main"
+                    type="button"
+                    onClick={() => setSelectedDocumentId(String(document.id))}
+                  >
+                    <div>
+                      <h3>{document.filename}</h3>
+                      <p>
+                        {document.page_count} 页 · {formatDate(document.created_at)}
+                      </p>
+                    </div>
+                    <span>#{document.id}</span>
+                  </button>
+                  <button
+                    aria-label={`删除 ${document.filename}`}
+                    className="delete-document-button"
+                    disabled={deletingDocumentId === document.id}
+                    type="button"
+                    onClick={() => handleDeleteDocument(document)}
+                  >
+                    {deletingDocumentId === document.id ? '删除中' : '删除'}
+                  </button>
+                </div>
               ))
             )}
           </div>

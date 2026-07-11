@@ -258,10 +258,9 @@ button.text-button:hover {
   border: 0;
   border-top: 1px solid #e2e8f0;
   border-radius: 0;
-  padding: 14px 0;
+  padding: 8px 0;
   color: inherit;
   background: transparent;
-  text-align: left;
 }
 
 .document-item:hover {
@@ -274,19 +273,59 @@ button.text-button:hover {
   background: #eff6ff;
 }
 
-.document-item p {
+.document-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1 1 auto;
+  gap: 12px;
+  min-width: 0;
+  border: 0;
+  padding: 6px 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.document-main:hover {
+  background: transparent;
+}
+
+.document-main div {
+  min-width: 0;
+}
+
+.document-main h3 {
+  overflow-wrap: anywhere;
+}
+
+.document-main p {
   margin-bottom: 0;
   color: #64748b;
   font-size: 13px;
 }
 
-.document-item span {
+.document-main span {
+  flex: 0 0 auto;
   border-radius: 999px;
   padding: 5px 9px;
   background: #eef2ff;
   color: #3730a3;
   font-size: 13px;
   white-space: nowrap;
+}
+
+.delete-document-button {
+  flex: 0 0 auto;
+  border-color: #fecaca;
+  padding: 7px 9px;
+  color: #b91c1c;
+  background: #fff;
+  font-size: 13px;
+}
+
+.delete-document-button:hover {
+  background: #fef2f2;
 }
 
 .document-select {

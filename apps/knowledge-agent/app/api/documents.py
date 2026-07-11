@@ -183,9 +183,16 @@ def delete_document(
 ) -> dict[str, int | str]:
     """根据文档 id 删除文档记录以及它关联的 chunks。"""
     service = DocumentService(db)
+    document = service.get_document(document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="文档不存在")
+
+    file_path = Path(document.file_path)
     deleted = service.delete_document(document_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="文档不存在")
+    if file_path.exists() and file_path.is_file():
+        file_path.unlink()
     return {
         "document_id": document_id,
         "message": "文档已删除",
