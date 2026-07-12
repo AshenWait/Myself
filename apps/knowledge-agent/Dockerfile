@@ -1,5 +1,6 @@
 ARG PYTHON_IMAGE=python:3.11-slim
 FROM ${PYTHON_IMAGE}
+ARG PIP_INDEX_URL=https://pypi.org/simple
 
 WORKDIR /app
 
@@ -8,8 +9,8 @@ ENV PYTHONUNBUFFERED=1
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --index-url "${PIP_INDEX_URL}" --no-cache-dir --upgrade pip \
+    && pip install --index-url "${PIP_INDEX_URL}" --no-cache-dir -r requirements.txt
 
 COPY app ./app
 

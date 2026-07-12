@@ -22,6 +22,7 @@ services:
       context: .
       args:
         PYTHON_IMAGE: ${PYTHON_IMAGE}
+        PIP_INDEX_URL: ${PIP_INDEX_URL}
     image: knowledge-agent-api:${API_IMAGE_TAG}
     container_name: knowledge-agent-api
     env_file:
