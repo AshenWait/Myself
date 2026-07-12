@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     postgres_user: str = "postgres"
     postgres_password: str = "postgres"
     postgres_db: str = "knowledge_agent"
-    postgres_host_port: int = 5433
-    api_host_port: int = 8000
+    postgres_host_port: str = "5433"
+    api_host_port: str = "8000"
     api_image_tag: str = "day66"
     deepseek_api_key:str
     dashscope_api_key: str
