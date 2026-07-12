@@ -1,6 +1,6 @@
 services:
   db:
-    image: pgvector/pgvector:pg16-trixie
+    image: ${PGVECTOR_IMAGE}
     container_name: knowledge-agent-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -18,7 +18,10 @@ services:
       retries: 10
 
   api:
-    build: .
+    build:
+      context: .
+      args:
+        PYTHON_IMAGE: ${PYTHON_IMAGE}
     image: knowledge-agent-api:${API_IMAGE_TAG}
     container_name: knowledge-agent-api
     env_file:
