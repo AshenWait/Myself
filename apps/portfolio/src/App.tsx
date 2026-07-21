@@ -39,7 +39,7 @@ const navItems = [
 const KNOWLEDGE_AGENT_URL =
   import.meta.env.VITE_KNOWLEDGE_AGENT_URL ||
   (import.meta.env.DEV ? 'http://127.0.0.1:5174/' : '/knowledge-agent-app/')
-const RESUME_STORAGE_KEY = 'portfolio.resume.html.20260715'
+const RESUME_STORAGE_KEY = 'portfolio.resume.html.20260721'
 const MAX_SAVED_RESUME_HTML_LENGTH = 1_100_000
 const RESUME_AVATAR_DEFAULT_SRC = '/resume/avatar.jpg'
 const RESUME_AVATAR_DEFAULT_IMAGE_HTML = `<img alt="${escapeHtml(resume.name)} 头像" src="${RESUME_AVATAR_DEFAULT_SRC}" />`
