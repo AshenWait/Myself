@@ -41,10 +41,12 @@ const KNOWLEDGE_AGENT_URL =
   (import.meta.env.DEV ? 'http://127.0.0.1:5174/' : '/knowledge-agent-app/')
 const RESUME_STORAGE_KEY = 'portfolio.resume.html.20260715'
 const MAX_SAVED_RESUME_HTML_LENGTH = 1_100_000
+const RESUME_AVATAR_DEFAULT_SRC = '/resume/avatar.jpg'
+const RESUME_AVATAR_DEFAULT_IMAGE_HTML = `<img alt="${escapeHtml(resume.name)} 头像" src="${RESUME_AVATAR_DEFAULT_SRC}" />`
 const RESUME_AVATAR_FRAME_HTML =
-  '<div aria-label="头像位置，点击上传" class="resume-avatar-frame" contenteditable="false" data-placeholder="点击上传" role="button" tabindex="0"></div>'
+  `<div aria-label="头像位置，点击上传" class="resume-avatar-frame" contenteditable="false" data-placeholder="点击上传" role="button" tabindex="0">${RESUME_AVATAR_DEFAULT_IMAGE_HTML}</div>`
 const RESUME_CONTACT_BREAK_HTML = '<span aria-hidden="true" class="resume-contact-break"></span>'
-const RESUME_SUMMARY_SECTION_TITLE = 'Positioning'
+const RESUME_SUMMARY_SECTION_TITLE = '个人简介'
 const DEFAULT_RESUME_HTML = createResumeHtml()
 const MAX_RESUME_AVATAR_SOURCE_BYTES = 8_000_000
 const MAX_RESUME_AVATAR_DATA_URL_LENGTH = 850_000
@@ -254,7 +256,6 @@ function createResumeHtml() {
         <h1>${escapeHtml(resume.name)}</h1>
         <p class="resume-role">${escapeHtml(resume.role)}</p>
         <div class="resume-contact">
-          <span>城市：${escapeHtml(resume.location)}</span>
           ${contactLinks
             .map(
               (link) =>
@@ -330,6 +331,10 @@ function prepareResumeAvatarFrame(frame: HTMLElement) {
   frame.setAttribute('data-placeholder', '点击上传')
   frame.setAttribute('role', 'button')
   frame.setAttribute('tabindex', '0')
+
+  if (!frame.querySelector('img')) {
+    frame.innerHTML = RESUME_AVATAR_DEFAULT_IMAGE_HTML
+  }
 }
 
 function normalizeResumeHtml(html: string) {
@@ -341,6 +346,16 @@ function normalizeResumeHtml(html: string) {
   template.innerHTML = html
 
   const contact = template.content.querySelector('.resume-contact')
+  Array.from(contact?.children || []).forEach((child) => {
+    if (
+      child instanceof HTMLSpanElement &&
+      !child.classList.contains('resume-contact-break') &&
+      child.textContent?.trim().startsWith('城市：')
+    ) {
+      child.remove()
+    }
+  })
+
   const contactLinks = contact?.querySelectorAll<HTMLAnchorElement>('a[href]')
   contactLinks?.forEach((link) => {
     if (!shouldBreakBeforeResumeContactLink(link.href)) {
@@ -355,6 +370,12 @@ function normalizeResumeHtml(html: string) {
     contactBreak.className = 'resume-contact-break'
     contactBreak.setAttribute('aria-hidden', 'true')
     link.before(contactBreak)
+  })
+
+  template.content.querySelectorAll('h2').forEach((heading) => {
+    if (heading.textContent?.trim() === 'Positioning') {
+      heading.textContent = RESUME_SUMMARY_SECTION_TITLE
+    }
   })
 
   const header = template.content.querySelector('.resume-sheet-header')

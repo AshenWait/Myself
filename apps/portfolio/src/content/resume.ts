@@ -24,7 +24,7 @@ export const resume: ResumeProfile = {
   role: '2027 届应届生 | AI 应用开发实习 / 大模型应用实习 / Python 后端实习',
   location: '南京',
   summary:
-    '面向 AI 应用实习，把 Demo 做成可演示、可调试的原型。主要学习 RAG、Agent Tool Calling 和 Python 后端开发，通过个人项目搭建知识库问答和小程序体验版，能在 AI Agent 辅助下完成需求拆解、代码实现、联调和运行验证。',
+    '了解Python、Java，mysql等计算机通用学科，学习过UE5, 能通过AI独立开发部署，学习能力强，常用codex，claude+ds，懂Agent与LLM运行方式。通过AI能快速上手其他技术，学起来很快。',
   links: [
     {
       label: '手机',
@@ -44,12 +44,11 @@ export const resume: ResumeProfile = {
     },
   ],
   focus: [
-    'RAG / Embedding / 向量检索',
-    'Python 后端与 FastAPI',
-    'Codex / Claude 辅助开发',
-    '运行结果校验',
-    'Tool Calling / Trace',
+    'RAG 知识库应用开发',
+    'Python / FastAPI 后端开发',
+    'Agent Tool Calling 与 Trace',
     '前后端联调',
+    '（下面内容是通过项目AI总结的内容）',
   ],
   skills: [
     {
@@ -73,7 +72,7 @@ export const resume: ResumeProfile = {
     {
       title: '教育背景与资质证明',
       items: [
-        '金陵科技学院 · 数字媒体技术，本科在读，2025.09 - 2027.06 。',
+        '金陵科技学院 · 数字媒体技术，本科在读，2025.09 - 2027.06',
         '无锡科技职业学院 · 物联网应用技术，专科，2020.10 - 2023.06。',
         '阿里云大模型工程师 ACA 认证，2026.05.06；',
         '全国计算机等级考试二级 Python，2021.03。',
