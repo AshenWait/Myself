@@ -23,6 +23,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
@@ -39,7 +40,8 @@ const navItems = [
 const KNOWLEDGE_AGENT_URL =
   import.meta.env.VITE_KNOWLEDGE_AGENT_URL ||
   (import.meta.env.DEV ? 'http://127.0.0.1:5174/' : '/knowledge-agent-app/')
-const RESUME_STORAGE_KEY = 'portfolio.resume.html.20260721'
+const RESUME_STORAGE_KEY = 'portfolio.resume.html.20260820b'
+const RESUME_DESIGN_WIDTH = 980
 const MAX_SAVED_RESUME_HTML_LENGTH = 1_100_000
 const RESUME_AVATAR_DEFAULT_SRC = '/resume/avatar.jpg'
 const RESUME_AVATAR_DEFAULT_IMAGE_HTML = `<img alt="${escapeHtml(resume.name)} 头像" src="${RESUME_AVATAR_DEFAULT_SRC}" />`
@@ -248,7 +250,7 @@ function clearStoredTradingQrSrc() {
 
 function createResumeHtml() {
   const [education, ...projects] = resume.timeline
-  const contactLinks = resume.links.slice(0, 3)
+  const contactLinks = resume.links.slice(0, 4)
 
   return `
     <header class="resume-sheet-header">
@@ -261,7 +263,7 @@ function createResumeHtml() {
               (link) =>
                 `${shouldBreakBeforeResumeContactLink(link.href) ? RESUME_CONTACT_BREAK_HTML : ''}<a href="${escapeHtml(
                   link.href,
-                )}" target="_blank" rel="noreferrer">${escapeHtml(link.label)}：${escapeHtml(linkText(link.href))}</a>`,
+                )}" target="_blank" rel="noreferrer">${escapeHtml(link.label)}：${escapeHtml(link.text || linkText(link.href))}</a>`,
             )
             .join('')}
           </div>
@@ -287,7 +289,6 @@ function createResumeHtml() {
       <h2>${RESUME_SUMMARY_SECTION_TITLE}</h2>
       <div class="resume-summary-grid">
         <p>${escapeHtml(resume.summary)}</p>
-        <ul>${listItems(resume.focus.slice(4))}</ul>
       </div>
     </section>
 
@@ -587,10 +588,35 @@ function AppShell() {
 }
 
 function HomePage() {
+  const resumeStageRef = useRef<HTMLDivElement>(null)
   const resumeRef = useRef<HTMLElement>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [resumeHtml, setResumeHtml] = useState(() => readStoredResumeHtml())
   const [avatarError, setAvatarError] = useState('')
+
+  useLayoutEffect(() => {
+    const stage = resumeStageRef.current
+    const sheet = resumeRef.current
+    if (!stage || !sheet) {
+      return
+    }
+
+    const updateResumeScale = () => {
+      const scale = Math.min(1, stage.clientWidth / RESUME_DESIGN_WIDTH)
+      const height = `${Math.ceil(sheet.offsetHeight * scale)}px`
+      stage.style.setProperty('--resume-scale', String(scale))
+      if (stage.style.height !== height) {
+        stage.style.height = height
+      }
+    }
+
+    updateResumeScale()
+    const resizeObserver = new ResizeObserver(updateResumeScale)
+    resizeObserver.observe(stage)
+    resizeObserver.observe(sheet)
+
+    return () => resizeObserver.disconnect()
+  }, [resumeHtml])
 
   const openAvatarPicker = () => {
     setAvatarError('')
@@ -669,7 +695,12 @@ function HomePage() {
     <>
       <section className="section resume-page" id="resume">
         <div className="resume-toolbar" aria-label="Resume actions">
-          <a className="secondary-action" href="/resume/resume.pdf" target="_blank" rel="noreferrer">
+          <a
+            aria-label="下载一页版 PDF 简历"
+            className="secondary-action"
+            download="杨鹏坤简历.pdf"
+            href="/resume/resume-one-page.pdf"
+          >
             <Download size={16} />
             PDF
           </a>
@@ -688,13 +719,15 @@ function HomePage() {
           </p>
         )}
 
-        <article
-          className="resume-sheet"
-          dangerouslySetInnerHTML={{ __html: resumeHtml }}
-          onClick={handleResumeClick}
-          onKeyDown={handleResumeKeyDown}
-          ref={resumeRef}
-        />
+        <div className="resume-stage" ref={resumeStageRef}>
+          <article
+            className="resume-sheet"
+            dangerouslySetInnerHTML={{ __html: resumeHtml }}
+            onClick={handleResumeClick}
+            onKeyDown={handleResumeKeyDown}
+            ref={resumeRef}
+          />
+        </div>
       </section>
     </>
   )

@@ -141,6 +141,7 @@
 .primary-action,
 .secondary-action {
   border: 1px solid var(--line-strong);
+  cursor: pointer;
   font-weight: 750;
   padding: 10px 14px;
 }
@@ -189,13 +190,23 @@
   text-align: right;
 }
 
+.resume-stage {
+  position: relative;
+  width: 100%;
+}
+
 .resume-sheet {
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  margin: 0 auto;
-  max-width: 980px;
-  min-height: 1180px;
-  padding: clamp(28px, 5vw, 58px);
+  left: 50%;
+  margin: 0;
+  max-width: none;
+  padding: 58px;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%) scale(var(--resume-scale, 1));
+  transform-origin: top center;
+  width: 980px;
 }
 
 .resume-sheet.is-editing {
@@ -206,7 +217,7 @@
 .resume-sheet h1 {
   color: #12223a;
   font-family: var(--sans);
-  font-size: clamp(2.8rem, 6vw, 4.6rem);
+  font-size: 4.6rem;
   font-weight: 900;
   line-height: 0.95;
   margin: 0 0 10px;
@@ -261,7 +272,7 @@
   border-bottom: 3px solid var(--mint);
   display: grid;
   gap: 22px;
-  grid-template-columns: minmax(0, 1fr) clamp(118px, 17vw, 154px);
+  grid-template-columns: minmax(0, 1fr) 154px;
   margin-bottom: 26px;
   padding-bottom: 22px;
 }
@@ -372,12 +383,7 @@
 }
 
 .resume-summary-grid p {
-  margin-bottom: 10px;
-}
-
-.resume-summary-grid ul {
-  margin: 0;
-  padding-left: 18px;
+  margin-bottom: 0;
 }
 
 .resume-skill-grid {
@@ -992,20 +998,6 @@
     margin-left: 0;
   }
 
-  .resume-split,
-  .resume-skill-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .resume-sheet-header {
-    grid-template-columns: 1fr;
-  }
-
-  .resume-avatar-frame {
-    justify-self: start;
-    max-width: 140px;
-  }
-
   .agent-page {
     height: calc(100vh - 67px);
   }
@@ -1046,15 +1038,6 @@
     width: 100%;
   }
 
-  .resume-sheet {
-    min-height: 0;
-    padding: 22px;
-  }
-
-  .resume-sheet h1 {
-    font-size: 2.4rem;
-  }
-
   .snake-topline,
   .snake-stats {
     flex-direction: column;
@@ -1072,5 +1055,88 @@
 
   .agent-frame-wrap {
     min-height: 0;
+  }
+}
+
+@media print {
+  @page {
+    margin: 4mm;
+    size: A4 portrait;
+  }
+
+  html,
+  :root,
+  body,
+  #root,
+  .app-shell,
+  .page,
+  .resume-page {
+    background: #ffffff;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .sidebar,
+  .mobile-header,
+  .resume-toolbar,
+  .resume-avatar-error {
+    display: none !important;
+  }
+
+  .page {
+    margin-left: 0;
+  }
+
+  .section,
+  .resume-page {
+    border: 0;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .resume-stage {
+    height: auto !important;
+    position: static;
+    width: 100%;
+  }
+
+  .resume-sheet {
+    box-shadow: none;
+    display: block;
+    margin: 0 auto;
+    max-width: none;
+    min-height: 0;
+    padding: 58px;
+    position: static;
+    transform: none;
+    width: 980px;
+    zoom: 0.62;
+  }
+
+  .resume-sheet,
+  .resume-sheet * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .resume-sheet-header,
+  .resume-split > div,
+  .resume-summary-grid,
+  .resume-skill-grid > div,
+  .resume-projects article {
+    break-inside: avoid;
+  }
+
+  .resume-projects {
+    display: block;
+  }
+
+  .resume-projects article + article {
+    margin-top: 14px;
+  }
+
+  .resume-avatar-frame {
+    box-shadow: none;
+    cursor: default;
   }
 }
