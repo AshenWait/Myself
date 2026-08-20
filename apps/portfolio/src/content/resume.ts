@@ -1,6 +1,7 @@
 export type ResumeLink = {
   label: string
   href: string
+  text?: string
 }
 
 export type ResumeSection = {
@@ -31,6 +32,11 @@ export const resume: ResumeProfile = {
       href: 'tel:+8619732031811',
     },
     {
+      label: '展示地址',
+      href: 'http://106.15.4.140/',
+      text: 'http://106.15.4.140/',
+    },
+    {
       label: '邮箱',
       href: 'mailto:yangpengkun2020@gmail.com',
     },
@@ -48,7 +54,6 @@ export const resume: ResumeProfile = {
     'Python / FastAPI 后端开发',
     'Agent Tool Calling 与 Trace',
     '前后端联调',
-    '（下面内容是通过项目AI总结的内容）',
   ],
   skills: [
     {
@@ -82,20 +87,16 @@ export const resume: ResumeProfile = {
     {
       title: 'Knowledge Agent: 企业知识库 RAG + Agent 原型系统（重点项目）',
       items: [
-        '技术栈：个人项目 | AI 应用开发学习 / Python 后端 | Codex / Claude / FastAPI / RAG / Agent / pgvector / Trace。',
-        '核心功能：面向企业知识库问答场景，搭建文档处理、向量检索、RAG 问答和工具调用原型，重点练习让回答有引用、可排查、可演示。',
+        '面向企业知识库问答场景，基于 FastAPI、RAG 与 pgvector 搭建文档处理、向量检索、问答和工具调用原型，让回答有引用、可排查、可演示。',
         '完成基础 RAG 链路：文档上传解析、chunk 切分、embedding 入库、pgvector 检索、问答生成和引用来源展示，并接入前端工作台联调演示。',
-        '尝试接入 Agent Tool Calling，设计文档列表、检索、总结、创建笔记等工具；写入类工具加入参数校验、会话白名单和确认步骤。',
-        '加入 prompt injection 检查、无引用拒答、输出日志和 run_id 记录，便于复盘模型调用、工具调用和错误原因。',
-        '编写离线评测脚本和固定题集，记录 top-3 检索命中、引用完整性和失败原因，用于调整 chunk size、top_k 和提示词。',
+        '设计文档列表、检索、总结、创建笔记等 Agent 工具；写入类工具加入参数校验、会话白名单和确认步骤。',
+        '加入 prompt injection 检查、无引用拒答、日志和 run_id；通过固定题集记录 top-3 检索命中、引用完整性和失败原因。',
       ],
     },
     {
       title: 'SilentElderSense: 面向独居老人的异常行为识别与应急响应系统（负责前后端，竞赛项目）',
       items: [
-        '技术栈：Vue 3 前端 + Python Quart 后端 + SQLite 数据库 + ONNX 计算机视觉推理。',
-        '面向独居老人异常行为识别场景，参与后端接口和事件链路开发，把视频检测结果保存为可查询、可追踪的风险事件。',
-        '使用 AI Agent 辅助阅读既有模块、梳理接口职责和生成初版代码，再通过联调问题和运行结果逐步修正。',
+        '基于 Vue 3、Python Quart、SQLite 与 ONNX，面向独居老人异常行为识别场景开发前后端与事件链路，将检测结果保存为可查询、可追踪的风险事件。',
         '参与视频上传、WebSocket 实时检测、识别结果解析、事件生命周期记录和管理端查询等接口开发。',
         '参与事件数据模型设计，记录用户、video_id、person_id、事件类型、风险等级、起止时间、快照路径等字段，支持分页筛选和状态更新。',
       ],
