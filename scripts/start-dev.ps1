@@ -9,6 +9,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 $PortfolioDir = Join-Path $Root 'apps/portfolio'
 $AgentDir = Join-Path $Root 'apps/knowledge-agent'
 $AgentFrontendDir = Join-Path $AgentDir 'frontend'
+$OneilDir = Join-Path $Root 'apps/oneil-screener'
 
 function Test-Port {
   param([int]$Port)
@@ -69,6 +70,32 @@ function Start-NpmDev {
   }
 }
 
+function Start-PythonModule {
+  param(
+    [string]$Name,
+    [string]$Directory,
+    [string]$Module,
+    [int]$Port
+  )
+
+  if (Test-Port $Port) {
+    Write-Host "$Name already running on http://127.0.0.1:$Port/"
+    return
+  }
+
+  Start-Process `
+    -FilePath 'python' `
+    -ArgumentList @('-m', $Module, '--host', '127.0.0.1', '--port', "$Port") `
+    -WorkingDirectory $Directory `
+    -WindowStyle Hidden
+
+  if (Wait-Port $Port) {
+    Write-Host "$Name started on http://127.0.0.1:$Port/"
+  } else {
+    Write-Warning "$Name did not open port $Port in time."
+  }
+}
+
 function Test-AgentEnv {
   $envPath = Join-Path $AgentDir '.env'
   if (-not (Test-Path $envPath)) {
@@ -86,6 +113,7 @@ function Test-Docker {
   return $LASTEXITCODE -eq 0
 }
 
+Start-PythonModule -Name "O'Neil screener API" -Directory $OneilDir -Module 'oneil_screener.api' -Port 8765
 Start-NpmDev -Name 'Portfolio' -Directory $PortfolioDir -Port 5173
 Start-NpmDev -Name 'Knowledge Agent frontend' -Directory $AgentFrontendDir -Port 5174
 

@@ -14,6 +14,7 @@ import {
   Pause,
   Play,
   RotateCcw,
+  TrendingUp,
   Upload,
   X,
 } from 'lucide-react'
@@ -29,11 +30,13 @@ import {
 } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
+import { OneilScreenerPage } from './OneilScreenerPage'
 import { resume } from './content/resume'
 
 const navItems = [
   { label: '简历', href: '/', icon: FileText },
   { label: 'Agent', href: '/knowledge-agent', icon: Blocks },
+  { label: '选股', href: '/oneil-screener', icon: TrendingUp },
   { label: 'Lab', href: '/lab', icon: FlaskConical },
 ]
 
@@ -579,6 +582,7 @@ function AppShell() {
         <Routes>
           <Route element={<HomePage />} path="/" />
           <Route element={<KnowledgeAgentPage />} path="/knowledge-agent/*" />
+          <Route element={<OneilScreenerPage />} path="/oneil-screener" />
           <Route element={<LabPage />} path="/lab/*" />
           <Route element={<NotFoundPage />} path="*" />
         </Routes>

@@ -1,11 +1,12 @@
 # AshenWait Monorepo
 
-这个仓库把个人作品集和 Knowledge Agent 复刻版放在一起，保持一个总项目、两个清晰应用。
+这个仓库把个人作品集、Knowledge Agent 复刻版和欧奈尔选股程序放在一起，保持一个总项目、三个清晰应用。
 
 ## Apps
 
 - `apps/portfolio`: 个人作品集网站，展示简历、项目和实验区。
 - `apps/knowledge-agent`: 企业知识库 RAG + Agent 项目复刻版。
+- `apps/oneil-screener`: 本地通达信 CAN SLIM / 欧奈尔风格选股 CLI。
 
 ## Common Commands
 
@@ -15,7 +16,7 @@
 .\scripts\start-dev.ps1
 ```
 
-这个脚本会启动作品集 `http://127.0.0.1:5173/` 和 Knowledge Agent 前端 `http://127.0.0.1:5174/`。如果 `apps/knowledge-agent/.env` 已配置且 Docker Desktop 正在运行，也会启动 Knowledge Agent 后端和数据库。
+这个脚本会启动作品集 `http://127.0.0.1:5173/`、Knowledge Agent 前端 `http://127.0.0.1:5174/` 和欧奈尔选股 API `http://127.0.0.1:8765/`。如果 `apps/knowledge-agent/.env` 已配置且 Docker Desktop 正在运行，也会启动 Knowledge Agent 后端和数据库。
 
 作品集：
 
@@ -45,6 +46,13 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+欧奈尔选股：
+
+```powershell
+cd apps/oneil-screener
+python -m oneil_screener.api
 ```
 
 ## Notes

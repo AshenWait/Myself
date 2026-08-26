@@ -1,0 +1,4 @@
+output/
+storage/*.json
+storage/*.csv
+!storage/.gitkeep

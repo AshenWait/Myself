@@ -1,0 +1,13 @@
+[project]
+name = "oneil-screener"
+version = "0.1.0"
+description = "A local Tongdaxin CAN SLIM / O'Neil style stock screener."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+oneil-screen = "oneil_screener.cli:main"
+oneil-api = "oneil_screener.api:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
