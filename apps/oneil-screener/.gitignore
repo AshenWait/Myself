@@ -1,4 +1,7 @@
 output/
+data/
+.env
 storage/*.json
 storage/*.csv
+storage/*.tmp
 !storage/.gitkeep

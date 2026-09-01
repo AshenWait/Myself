@@ -12,6 +12,7 @@ from .tdx import (
     load_tdx_stock_names,
     read_day_file,
 )
+from .tushare_data import load_sqlite_universe
 
 WEIGHTS = {
     "trend": 30.0,
@@ -74,6 +75,24 @@ def score_universe(
         if len(series.bars) >= min_history:
             series_list.append(replace(series, industry=meta.industry))
 
+    return score_loaded_universe(series_list, benchmark_bars, metadata)
+
+
+def score_sqlite_universe(
+    database_path: Path,
+    min_history: int = 220,
+) -> list[ScoreResult]:
+    benchmark_bars, series_list, metadata = load_sqlite_universe(database_path, min_history)
+    if len(benchmark_bars) < min_history:
+        raise ValueError("服务器行情的上证指数历史不足，无法扫描")
+    return score_loaded_universe(series_list, benchmark_bars[-260:], metadata)
+
+
+def score_loaded_universe(
+    series_list: list[StockSeries],
+    benchmark_bars: list[PriceBar],
+    metadata: dict[str, StockMetadata],
+) -> list[ScoreResult]:
     momentum_values = {series.symbol: weighted_momentum(series.bars) for series in series_list}
     rs_ranks = percentile_ranks(momentum_values)
     market_score = market_regime_score(benchmark_bars)

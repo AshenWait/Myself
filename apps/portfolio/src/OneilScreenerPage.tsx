@@ -6,10 +6,13 @@ import {
   CircleAlert,
   Database,
   ExternalLink,
+  HardDrive,
   LoaderCircle,
   RefreshCw,
   Save,
   Search,
+  Server,
+  Sparkles,
   Trash2,
   TrendingUp,
   Wifi,
@@ -21,10 +24,11 @@ import './OneilScreenerPage.css'
 const API_URL = import.meta.env.VITE_ONEIL_API_URL || 'http://127.0.0.1:8765'
 const TDX_ROOT_STORAGE_KEY = 'portfolio.oneil.tdx-root'
 const EASTMONEY_LINK_STORAGE_KEY = 'portfolio.oneil.open-eastmoney'
+const DATA_SOURCE_STORAGE_KEY = 'portfolio.oneil.data-source'
 const DEFAULT_TDX_ROOT = 'D:\\new_tdx64'
 const LEGACY_DEFAULT_TDX_ROOT = 'C:\\new_tdx'
 const INCORRECT_TDX_ROOT = 'D:\\new\\_tdx64'
-const PAGE_SIZE = 100
+const PAGE_SIZE = 50
 
 type ScoreComponents = {
   trend?: number
@@ -50,28 +54,104 @@ type ScoreRow = {
   flags: string[]
 }
 
+type SmartPick = {
+  rank: number
+  symbol: string
+  name: string
+  source_rank: number
+  score: number
+  trade_date: string
+  close: number
+  confidence: number
+  holding_period: string
+  entry_low: number
+  entry_high: number
+  stop_loss: number
+  take_profit_1: number
+  take_profit_2: number
+  thesis: string
+  entry_logic: string
+  stop_logic: string
+  take_profit_logic: string
+  risks: string[]
+}
+
+type SmartPickGroup = {
+  generated_at: string | null
+  model: string
+  source_trade_date: string | null
+  candidate_count: number
+  market_view: string
+  selection_logic: string
+  picks: SmartPick[]
+  disclaimer: string
+}
+
 type ScreenerState = {
   results: ScoreRow[]
   watchlist: ScoreRow[]
+  smart_picks: SmartPickGroup
   summary: {
     total: number
+    scanned_total: number
+    result_limit: number
     a: number
     b: number
     c: number
     rejected: number
     watchlist: number
+    smart: number
   }
   generated_at: string | null
+  data_sources: {
+    active: DataSourceMode
+    tushare: {
+      configured: boolean
+      automatic: boolean
+      schedule: string
+      syncing: boolean
+      ready: boolean
+      latest_trade_date: string | null
+      stock_count: number
+      progress?: number
+      progress_total?: number
+      last_error?: string
+      completed_at?: string
+    }
+  }
 }
 
-type ViewMode = 'results' | 'watchlist'
+type ViewMode = 'results' | 'watchlist' | 'smart'
 type BucketFilter = 'all' | 'a' | 'b' | 'c'
+type DataSourceMode = 'tdx' | 'tushare'
 
 const EMPTY_STATE: ScreenerState = {
   results: [],
   watchlist: [],
-  summary: { total: 0, a: 0, b: 0, c: 0, rejected: 0, watchlist: 0 },
+  smart_picks: {
+    generated_at: null,
+    model: '',
+    source_trade_date: null,
+    candidate_count: 0,
+    market_view: '',
+    selection_logic: '',
+    picks: [],
+    disclaimer: '智选仅用于研究参考，不构成投资建议或收益承诺。',
+  },
+  summary: { total: 0, scanned_total: 0, result_limit: 50, a: 0, b: 0, c: 0, rejected: 0, watchlist: 0, smart: 0 },
   generated_at: null,
+  data_sources: {
+    active: 'tdx',
+    tushare: {
+      configured: false,
+      automatic: false,
+      schedule: '18:10',
+      syncing: false,
+      ready: false,
+      latest_trade_date: null,
+      stock_count: 0,
+    },
+  },
 }
 
 const COMPONENT_LABELS: Array<[keyof ScoreComponents, string]> = [
@@ -119,6 +199,14 @@ function readEastmoneyPreference() {
     return window.localStorage.getItem(EASTMONEY_LINK_STORAGE_KEY) !== 'false'
   } catch {
     return true
+  }
+}
+
+function readDataSourcePreference(): DataSourceMode {
+  try {
+    return window.localStorage.getItem(DATA_SOURCE_STORAGE_KEY) === 'tushare' ? 'tushare' : 'tdx'
+  } catch {
+    return 'tdx'
   }
 }
 
@@ -174,8 +262,7 @@ export function OneilScreenerPage() {
   const [state, setState] = useState<ScreenerState>(EMPTY_STATE)
   const [tdxRoot, setTdxRoot] = useState(readSavedTdxRoot)
   const [savedTdxRoot, setSavedTdxRoot] = useState(readSavedTdxRoot)
-  const [minScore, setMinScore] = useState(75)
-  const [autoAdd, setAutoAdd] = useState(true)
+  const [dataSource, setDataSource] = useState<DataSourceMode>(readDataSourcePreference)
   const [openEastmoney, setOpenEastmoney] = useState(readEastmoneyPreference)
   const [view, setView] = useState<ViewMode>('results')
   const [bucketFilter, setBucketFilter] = useState<BucketFilter>('all')
@@ -184,6 +271,8 @@ export function OneilScreenerPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
+  const [smarting, setSmarting] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [busySymbol, setBusySymbol] = useState('')
   const [copiedKey, setCopiedKey] = useState('')
   const [online, setOnline] = useState(false)
@@ -213,11 +302,17 @@ export function OneilScreenerPage() {
   }, [refresh])
 
   useEffect(() => {
+    if (!state.data_sources.tushare.syncing) return
+    const interval = window.setInterval(() => void refresh(), 3000)
+    return () => window.clearInterval(interval)
+  }, [refresh, state.data_sources.tushare.syncing])
+
+  useEffect(() => {
     setPage(1)
   }, [view, bucketFilter, query])
 
   const watchlistSymbols = useMemo(() => new Set(state.watchlist.map((item) => item.symbol)), [state.watchlist])
-  const sourceRows = view === 'results' ? state.results : state.watchlist
+  const sourceRows = view === 'watchlist' ? state.watchlist : state.results
   const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     return sourceRows.filter((row) => {
@@ -255,10 +350,26 @@ export function OneilScreenerPage() {
     return nextRoot
   }
 
+  const selectDataSource = (nextSource: DataSourceMode) => {
+    setDataSource(nextSource)
+    setError('')
+    try {
+      window.localStorage.setItem(DATA_SOURCE_STORAGE_KEY, nextSource)
+    } catch {
+      // The selected source still applies to the current session.
+    }
+  }
+
+  const sourcePayload = () => {
+    if (dataSource === 'tushare') return { data_source: 'tushare' }
+    const nextRoot = saveTdxRoot()
+    return nextRoot ? { data_source: 'tdx', tdx_root: nextRoot } : null
+  }
+
   const runScan = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const nextRoot = saveTdxRoot()
-    if (!nextRoot) return
+    const payload = sourcePayload()
+    if (!payload) return
     setScanning(true)
     setError('')
     try {
@@ -266,11 +377,7 @@ export function OneilScreenerPage() {
         await requestState('/api/scan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tdx_root: nextRoot,
-            min_score: minScore,
-            auto_add: autoAdd,
-          }),
+          body: JSON.stringify(payload),
         }),
       )
       setView('results')
@@ -279,6 +386,40 @@ export function OneilScreenerPage() {
       setError(requestError instanceof Error ? requestError.message : '扫描失败')
     } finally {
       setScanning(false)
+    }
+  }
+
+  const runSmartPicks = async () => {
+    const payload = sourcePayload()
+    if (!payload) return
+    setSmarting(true)
+    setError('')
+    try {
+      applyState(
+        await requestState('/api/smart-picks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }),
+      )
+      setView('smart')
+      setPage(1)
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : '智选失败')
+    } finally {
+      setSmarting(false)
+    }
+  }
+
+  const syncServerData = async () => {
+    setSyncing(true)
+    setError('')
+    try {
+      applyState(await requestState('/api/tushare/sync', { method: 'POST' }))
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : '服务器行情同步失败')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -327,6 +468,19 @@ export function OneilScreenerPage() {
     }
   }
 
+  const tushareStatus = state.data_sources.tushare
+  const serverSourceBusy = syncing || tushareStatus.syncing
+  const sourceUnavailable = dataSource === 'tushare' && (!tushareStatus.ready || serverSourceBusy)
+  const serverStatusLabel = serverSourceBusy
+    ? `同步中 ${tushareStatus.progress || 0}/${tushareStatus.progress_total || 0}`
+    : tushareStatus.ready
+      ? `更新至 ${tushareStatus.latest_trade_date}`
+      : tushareStatus.last_error
+        ? '同步失败'
+      : tushareStatus.configured
+        ? '等待首次同步'
+        : '未配置 Token'
+
   return (
     <section className="oneil-page">
       <header className="oneil-header">
@@ -337,50 +491,80 @@ export function OneilScreenerPage() {
         </div>
         <div className={`oneil-service ${online ? 'is-online' : 'is-offline'}`}>
           {online ? <Wifi size={16} /> : <WifiOff size={16} />}
-          <span>{online ? '本地服务在线' : '本地服务离线'}</span>
+          <span>{online ? '选股服务在线' : '选股服务离线'}</span>
         </div>
       </header>
 
       <form className="oneil-scanbar" onSubmit={runScan}>
-        <div className="oneil-path-field">
-          <span>通达信目录</span>
-          <div>
-            <Database size={17} />
-            <input
-              aria-label="通达信目录"
-              onChange={(event) => setTdxRoot(event.target.value)}
-              spellCheck={false}
-              value={tdxRoot}
-            />
+        <div className="oneil-source-field">
+          <span>数据源</span>
+          <div aria-label="行情数据源" className="oneil-source-segment" role="radiogroup">
             <button
-              aria-label={tdxRoot === savedTdxRoot ? '路径已保存' : '保存路径'}
-              className="oneil-path-save"
-              disabled={!tdxRoot.trim() || tdxRoot === savedTdxRoot}
-              onClick={saveTdxRoot}
-              title={tdxRoot === savedTdxRoot ? '路径已保存' : '保存路径'}
+              aria-checked={dataSource === 'tdx'}
+              className={dataSource === 'tdx' ? 'is-active' : ''}
+              onClick={() => selectDataSource('tdx')}
+              role="radio"
               type="button"
-            >
-              {tdxRoot === savedTdxRoot ? <Check size={16} /> : <Save size={16} />}
-            </button>
+            ><HardDrive size={14} />本地</button>
+            <button
+              aria-checked={dataSource === 'tushare'}
+              className={dataSource === 'tushare' ? 'is-active' : ''}
+              onClick={() => selectDataSource('tushare')}
+              role="radio"
+              type="button"
+            ><Server size={14} />服务器</button>
           </div>
         </div>
-        <label className="oneil-score-field">
-          <span>入选分数</span>
-          <input
-            aria-label="自选股最低分数"
-            max="100"
-            min="0"
-            onChange={(event) => setMinScore(Number(event.target.value))}
-            type="number"
-            value={minScore}
-          />
-        </label>
-        <label className="oneil-toggle">
-          <input checked={autoAdd} onChange={(event) => setAutoAdd(event.target.checked)} type="checkbox" />
-          <span aria-hidden="true" />
-          自动加入自选
-        </label>
-        <button className="oneil-run-button" disabled={scanning} type="submit">
+        {dataSource === 'tdx' ? (
+          <div className="oneil-path-field">
+            <span>通达信目录</span>
+            <div>
+              <Database size={17} />
+              <input
+                aria-label="通达信目录"
+                onChange={(event) => setTdxRoot(event.target.value)}
+                spellCheck={false}
+                value={tdxRoot}
+              />
+              <button
+                aria-label={tdxRoot === savedTdxRoot ? '路径已保存' : '保存路径'}
+                className="oneil-path-save"
+                disabled={!tdxRoot.trim() || tdxRoot === savedTdxRoot}
+                onClick={saveTdxRoot}
+                title={tdxRoot === savedTdxRoot ? '路径已保存' : '保存路径'}
+                type="button"
+              >
+                {tdxRoot === savedTdxRoot ? <Check size={16} /> : <Save size={16} />}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="oneil-server-field">
+            <span>服务器行情</span>
+            <div>
+              <Server size={17} />
+              <strong>{serverStatusLabel}</strong>
+              <small title={tushareStatus.last_error}>{tushareStatus.last_error || (tushareStatus.automatic ? `每日 ${tushareStatus.schedule}` : '自动更新关闭')}</small>
+              <button
+                aria-label="立即同步服务器行情"
+                disabled={!tushareStatus.configured || serverSourceBusy}
+                onClick={() => void syncServerData()}
+                title="立即同步服务器行情"
+                type="button"
+              ><RefreshCw className={serverSourceBusy ? 'is-spinning' : ''} size={16} /></button>
+            </div>
+          </div>
+        )}
+        <button
+          className="oneil-smart-button"
+          disabled={smarting || scanning || sourceUnavailable}
+          onClick={() => void runSmartPicks()}
+          type="button"
+        >
+          {smarting ? <LoaderCircle className="is-spinning" size={18} /> : <Sparkles size={18} />}
+          {smarting ? '智选中' : '一键智选'}
+        </button>
+        <button className="oneil-run-button" disabled={scanning || smarting || sourceUnavailable} type="submit">
           {scanning ? <LoaderCircle className="is-spinning" size={18} /> : <TrendingUp size={18} />}
           {scanning ? '扫描中' : '运行扫描'}
         </button>
@@ -406,7 +590,7 @@ export function OneilScreenerPage() {
       <section className="oneil-funnel" aria-label="股票池统计">
         <div>
           <span>股票池</span>
-          <strong>{state.summary.total}</strong>
+          <strong>{state.summary.scanned_total}</strong>
         </div>
         <div className="tone-a">
           <span>A · 深度研究</span>
@@ -422,7 +606,7 @@ export function OneilScreenerPage() {
         </div>
       </section>
 
-      <div className="oneil-toolbar">
+      <div className={`oneil-toolbar ${view === 'smart' ? 'is-smart' : ''}`}>
         <div className="oneil-tabs" role="tablist">
           <button
             aria-selected={view === 'results'}
@@ -442,43 +626,174 @@ export function OneilScreenerPage() {
           >
             自选股 <span>{state.summary.watchlist}</span>
           </button>
+          <button
+            aria-selected={view === 'smart'}
+            className={view === 'smart' ? 'is-active' : ''}
+            onClick={() => setView('smart')}
+            role="tab"
+            type="button"
+          >
+            智选 <span>{state.summary.smart}</span>
+          </button>
         </div>
-        <label className="oneil-search">
-          <Search size={16} />
-          <input
-            aria-label="搜索股票"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="代码 / 名称 / 行业"
-            value={query}
-          />
-        </label>
-        <label className="oneil-link-toggle" title="点击股票名称或代码时打开东方财富个股页">
-          <input
-            checked={openEastmoney}
-            onChange={(event) => toggleEastmoney(event.target.checked)}
-            type="checkbox"
-          />
-          <span aria-hidden="true" />
-          <ExternalLink size={15} />
-          点击跳转
-        </label>
-        <select
-          aria-label="评分分组"
-          className="oneil-filter"
-          onChange={(event) => setBucketFilter(event.target.value as BucketFilter)}
-          value={bucketFilter}
-        >
-          <option value="all">全部分组</option>
-          <option value="a">A · 深度研究</option>
-          <option value="b">B · 自选候选</option>
-          <option value="c">C · 筛选关注</option>
-        </select>
+        {view === 'smart' ? (
+          <div className="oneil-smart-tab-meta">
+            <Sparkles size={15} />
+            <span>{state.smart_picks.model || '等待生成'} · {formatDateTime(state.smart_picks.generated_at)}</span>
+          </div>
+        ) : (
+          <>
+            <label className="oneil-search">
+              <Search size={16} />
+              <input
+                aria-label="搜索股票"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="代码 / 名称 / 行业"
+                value={query}
+              />
+            </label>
+            <label className="oneil-link-toggle" title="点击股票名称或代码时打开东方财富个股页">
+              <input
+                checked={openEastmoney}
+                onChange={(event) => toggleEastmoney(event.target.checked)}
+                type="checkbox"
+              />
+              <span aria-hidden="true" />
+              <ExternalLink size={15} />
+              点击跳转
+            </label>
+            <select
+              aria-label="评分分组"
+              className="oneil-filter"
+              onChange={(event) => setBucketFilter(event.target.value as BucketFilter)}
+              value={bucketFilter}
+            >
+              <option value="all">全部分组</option>
+              <option value="a">A · 深度研究</option>
+              <option value="b">B · 自选候选</option>
+              <option value="c">C · 筛选关注</option>
+            </select>
+          </>
+        )}
       </div>
 
+      {view === 'smart' ? (
+        <section className="oneil-smart-panel" aria-label="智选组合">
+          {state.smart_picks.picks.length === 0 ? (
+            <div className="oneil-empty">
+              <Sparkles size={28} />
+              <strong>暂无智选组合</strong>
+              <span>点击“一键智选”，模型将从扫描前 10 名中选择 3 只</span>
+            </div>
+          ) : (
+            <>
+              <header className="oneil-smart-head">
+                <div>
+                  <span>AI SHORTLIST / TOP 10</span>
+                  <h2>短线智选组合</h2>
+                </div>
+                <div>
+                  <span>数据日期 {state.smart_picks.source_trade_date || '未知'}</span>
+                  <strong>{state.smart_picks.model}</strong>
+                </div>
+              </header>
+
+              <div className="oneil-smart-list">
+                {state.smart_picks.picks.map((pick) => {
+                  const row = state.results.find((item) => item.symbol === pick.symbol)
+                  const saved = watchlistSymbols.has(pick.symbol)
+                  return (
+                    <article className="oneil-smart-card" key={pick.symbol}>
+                      <div className="oneil-smart-card-head">
+                        <span className="oneil-smart-rank">0{pick.rank}</span>
+                        <div>
+                          <button
+                            className="oneil-smart-name"
+                            disabled={!row}
+                            onClick={() => row && void activateStock(row, 'name')}
+                            type="button"
+                          >
+                            {pick.name || pick.symbol.slice(2)}
+                          </button>
+                          <button
+                            className="oneil-smart-code"
+                            disabled={!row}
+                            onClick={() => row && void activateStock(row, 'code')}
+                            type="button"
+                          >
+                            {pick.symbol.slice(2)} · 扫描第 {pick.source_rank} 名
+                          </button>
+                        </div>
+                        <div className="oneil-smart-confidence">
+                          <span>置信</span>
+                          <strong>{pick.confidence}</strong>
+                        </div>
+                        <button
+                          aria-label={saved ? `从自选股移除 ${pick.symbol}` : `加入自选股 ${pick.symbol}`}
+                          className={`oneil-smart-save ${saved ? 'is-saved' : ''}`}
+                          disabled={!row || busySymbol === pick.symbol}
+                          onClick={() => row && void updateWatchlist(row, saved)}
+                          title={saved ? '从自选股移除' : '加入自选股'}
+                          type="button"
+                        >
+                          {busySymbol === pick.symbol ? (
+                            <LoaderCircle className="is-spinning" size={17} />
+                          ) : saved ? (
+                            <Trash2 size={17} />
+                          ) : (
+                            <BookmarkPlus size={17} />
+                          )}
+                        </button>
+                      </div>
+
+                      <p className="oneil-smart-thesis">{pick.thesis}</p>
+
+                      <div className="oneil-smart-prices">
+                        <div className="is-entry">
+                          <span>参考买入区间</span>
+                          <strong>{pick.entry_low.toFixed(2)} - {pick.entry_high.toFixed(2)}</strong>
+                          <small>最新收盘 {pick.close.toFixed(2)}</small>
+                        </div>
+                        <div className="is-profit">
+                          <span>止盈目标</span>
+                          <strong>{pick.take_profit_1.toFixed(2)} / {pick.take_profit_2.toFixed(2)}</strong>
+                          <small>分两档执行</small>
+                        </div>
+                        <div className="is-stop">
+                          <span>止损参考</span>
+                          <strong>{pick.stop_loss.toFixed(2)}</strong>
+                          <small>{pick.holding_period}</small>
+                        </div>
+                      </div>
+
+                      <dl className="oneil-smart-rules">
+                        <div><dt>入场</dt><dd>{pick.entry_logic}</dd></div>
+                        <div><dt>止盈</dt><dd>{pick.take_profit_logic}</dd></div>
+                        <div><dt>止损</dt><dd>{pick.stop_logic}</dd></div>
+                      </dl>
+
+                      <div className="oneil-smart-risks">
+                        <strong>失效风险</strong>
+                        {pick.risks.map((risk) => <span key={risk}>{risk}</span>)}
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+
+              <div className="oneil-smart-context">
+                <div><strong>模型判断</strong><p>{state.smart_picks.market_view}</p></div>
+                <div><strong>筛选逻辑</strong><p>{state.smart_picks.selection_logic}</p></div>
+              </div>
+              <p className="oneil-smart-disclaimer">{state.smart_picks.disclaimer}</p>
+            </>
+          )}
+        </section>
+      ) : (
       <div className="oneil-workspace">
         <div className="oneil-table-panel">
           {loading && state.results.length === 0 ? (
-            <div className="oneil-empty"><LoaderCircle className="is-spinning" size={24} />正在读取本地数据</div>
+            <div className="oneil-empty"><LoaderCircle className="is-spinning" size={24} />正在读取选股数据</div>
           ) : visibleRows.length === 0 ? (
             <div className="oneil-empty">
               <Database size={26} />
@@ -636,6 +951,7 @@ export function OneilScreenerPage() {
           )}
         </aside>
       </div>
+      )}
 
       <p className="oneil-disclaimer">筛选结果用于研究优先级排序，不构成投资建议。</p>
     </section>
